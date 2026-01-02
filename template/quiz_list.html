@@ -1,0 +1,231 @@
+<!-- templates/quiz_detail.html -->
+{% extends "base.html" %}
+
+{% block title %}{{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'quiz_list' %}">Викторинаҳо</a></li>
+            <li class="breadcrumb-item active">{{ quiz.title|truncatewords:3 }}</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <!-- Quiz Info -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h1 class="display-6 fw-bold">{{ quiz.title }}</h1>
+                            <p class="lead text-muted">{{ quiz.description }}</p>
+                        </div>
+                        
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                {% if user == quiz.created_by or user.role == 'admin' %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'quiz_edit' quiz.pk %}">
+                                        <i class="fas fa-edit me-2"></i> Таҳрир
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="#">
+                                        <i class="fas fa-trash me-2"></i> Ҳазф
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% endif %}
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-share me-2"></i> Мубодила
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Фан</h6>
+                                    <h4 class="fw-bold text-primary">{{ quiz.subject.name }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Вақт</h6>
+                                    <h4 class="fw-bold text-success">{{ quiz.duration }} дақ</h4>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Саволҳо</h6>
+                                    <h4 class="fw-bold text-info">{{ quiz.questions.count }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="card border-warning">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Иҷро</h6>
+                                    <h4 class="fw-bold text-warning">{{ quiz.attempts_count }} маротиба</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Questions Preview -->
+                    <div class="mb-4">
+                        <h4 class="mb-3">
+                            <i class="fas fa-list-ol me-2"></i>
+                            Саволҳо
+                        </h4>
+                        
+                        <div class="list-group">
+                            {% for question in quiz.questions.all|slice:":5" %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">Савол {{ forloop.counter }}</h6>
+                                        <p class="mb-0 text-muted">{{ question.text|truncatewords:10 }}</p>
+                                    </div>
+                                    <span class="badge bg-secondary">{{ question.get_type_display }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            
+                            {% if quiz.questions.count > 5 %}
+                            <div class="list-group-item text-center">
+                                <a href="#" class="text-decoration-none">
+                                    Ва дигар {{ quiz.questions.count|add:"-5" }} савол...
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Start Quiz Button -->
+                    <div class="d-grid gap-2">
+                        {% if can_take_quiz %}
+                        <a href="{% url 'quiz_start' quiz.pk %}" class="btn btn-success btn-lg">
+                            <i class="fas fa-play-circle me-2"></i> Викторинаро оғоз кунед
+                        </a>
+                        {% else %}
+                        <button class="btn btn-secondary btn-lg" disabled>
+                            <i class="fas fa-lock me-2"></i> Викторина барои шумо дастрас нест
+                        </button>
+                        {% endif %}
+                        
+                        <a href="{% url 'quiz_results' quiz.pk %}" class="btn btn-outline-primary">
+                            <i class="fas fa-chart-bar me-2"></i> Натиҷаҳои дигар корбарон
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Instructions -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Дастурҳо</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Викторина {{ quiz.duration }} дақиқа давом мекунад
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Пас аз тамом шудани вақт, ҷавобҳо худкор пешниҳод мешаванд
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Ба ҳар савол фақат як маротиба ҷавоб додан мумкин аст
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Натиҷаҳо фаврӣ пас аз анҷом додани викторина намоиш дода мешаванд
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Creator Info -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-user-edit me-2"></i>
+                        Эҷодкунанда
+                    </h5>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="user-avatar me-3">
+                            {{ quiz.created_by.username|first|upper }}
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ quiz.created_by.get_full_name|default:quiz.created_by.username }}</h6>
+                            <small class="text-muted">@{{ quiz.created_by.username }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h5 class="fw-bold">{{ quiz.created_by.quizzes_created.count }}</h5>
+                            <small class="text-muted">Викторинаҳо</small>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="fw-bold">{{ quiz.created_by.date_joined|date:"Y" }}</h5>
+                            <small class="text-muted">Соли бақайдгирӣ</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Related Quizzes -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-link me-2"></i>
+                        Викторинаҳои марбут
+                    </h5>
+                    
+                    <div class="list-group list-group-flush">
+                        {% for related_quiz in related_quizzes %}
+                        <a href="{% url 'quiz_detail' related_quiz.pk %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ related_quiz.title|truncatewords:3 }}</h6>
+                                    <small class="text-muted">{{ related_quiz.subject.name }}</small>
+                                </div>
+                                <span class="badge bg-primary">{{ related_quiz.duration }} дақ</span>
+                            </div>
+                        </a>
+                        {% empty %}
+                        <div class="text-center py-3">
+                            <p class="text-muted mb-0">Викторинаҳои марбут нестанд</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,293 @@
+<!-- templates/auth/register.html -->
+{% extends 'base.html' %}
+
+{% block title %}Бақайдгирӣ - Системаи Викторинаҳо{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white text-center py-4">
+                    <h3 class="mb-0">
+                        <i class="fas fa-user-plus"></i> Бақайдгирии нав
+                    </h3>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="username" class="form-label">
+                                    <i class="fas fa-user"></i> Номи истифодабарӣ *
+                                </label>
+                                <input type="text" 
+                                       name="username" 
+                                       id="username" 
+                                       class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+                                       value="{{ form.username.value|default:'' }}"
+                                       placeholder="Номи истифодабарӣ"
+                                       required>
+                                {% if form.username.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.username.errors.0 }}
+                                </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    Номи истифодабариро бо ҳарфҳои лотинӣ ворид кунед
+                                </small>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">
+                                    <i class="fas fa-envelope"></i> Почтаи электронӣ *
+                                </label>
+                                <input type="email" 
+                                       name="email" 
+                                       id="email" 
+                                       class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+                                       value="{{ form.email.value|default:'' }}"
+                                       placeholder="example@domain.com"
+                                       required>
+                                {% if form.email.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.email.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="first_name" class="form-label">
+                                    <i class="fas fa-signature"></i> Ном
+                                </label>
+                                <input type="text" 
+                                       name="first_name" 
+                                       id="first_name" 
+                                       class="form-control"
+                                       value="{{ form.first_name.value|default:'' }}"
+                                       placeholder="Номи худро ворид кунед">
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">
+                                    <i class="fas fa-signature"></i> Насаб
+                                </label>
+                                <input type="text" 
+                                       name="last_name" 
+                                       id="last_name" 
+                                       class="form-control"
+                                       value="{{ form.last_name.value|default:'' }}"
+                                       placeholder="Насаби худро ворид кунед">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="password1" class="form-label">
+                                    <i class="fas fa-lock"></i> Парол *
+                                </label>
+                                <input type="password" 
+                                       name="password1" 
+                                       id="password1" 
+                                       class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
+                                       placeholder="Пароли мустаҳкам"
+                                       required>
+                                {% if form.password1.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.password1.errors.0 }}
+                                </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    Ҳадди ақал 8 аломат, шумора ва ҳарфҳои калон
+                                </small>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="password2" class="form-label">
+                                    <i class="fas fa-lock"></i> Такрори парол *
+                                </label>
+                                <input type="password" 
+                                       name="password2" 
+                                       id="password2" 
+                                       class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
+                                       placeholder="Паролро такрор кунед"
+                                       required>
+                                {% if form.password2.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.password2.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="role" class="form-label">
+                                <i class="fas fa-user-tag"></i> Навъи корбар *
+                            </label>
+                            <select name="role" 
+                                    id="role" 
+                                    class="form-select {% if form.role.errors %}is-invalid{% endif %}"
+                                    required>
+                                <option value="">Навъи корбарро интихоб кунед</option>
+                                <option value="student" {% if form.role.value == 'student' %}selected{% endif %}>
+                                    Талиба
+                                </option>
+                                <option value="teacher" {% if form.role.value == 'teacher' %}selected{% endif %}>
+                                    Муаллим
+                                </option>
+                                <option value="group_leader" {% if form.role.value == 'group_leader' %}selected{% endif %}>
+                                    Сарвари гурӯҳ
+                                </option>
+                            </select>
+                            {% if form.role.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.role.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input type="checkbox" 
+                                       class="form-check-input {% if form.terms.errors %}is-invalid{% endif %}" 
+                                       id="terms" 
+                                       name="terms"
+                                       required>
+                                <label class="form-check-label" for="terms">
+                                    Ман бо <a href="#" class="text-decoration-none">шароитҳои истифода</a> розӣ ҳастам
+                                </label>
+                                {% if form.terms.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.terms.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-user-plus"></i> Бақайдгирӣ
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <p class="mb-0">
+                            Аллакай ҳисоби истифодабарӣ доред?
+                            <a href="{% url 'login' %}" class="text-decoration-none">
+                                Воридшавӣ
+                            </a>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="card-footer text-center py-3">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt"></i> 
+                        Маълумоти шахсии шумо ба таври амният нигоҳ дошта мешавад.
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Role Info -->
+            <div class="card mt-4 shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-info-circle text-info"></i> Тавсифи намудҳои корбар:
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="border rounded p-3 h-100">
+                                <h6 class="text-primary">
+                                    <i class="fas fa-user-graduate"></i> Талиба
+                                </h6>
+                                <p class="mb-0 small">
+                                    Метавонад дар викторинаҳо иштирок кунад, натиҷаҳоро бубинад ва ба гурӯҳҳо ҳамроҳ шавад.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="border rounded p-3 h-100">
+                                <h6 class="text-success">
+                                    <i class="fas fa-chalkboard-teacher"></i> Муаллим
+                                </h6>
+                                <p class="mb-0 small">
+                                    Метавонад викторина эҷод кунад, саволҳо илова кунад, натиҷаҳоро дида барояд ва гурӯҳ созад.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="border rounded p-3 h-100">
+                                <h6 class="text-warning">
+                                    <i class="fas fa-users-cog"></i> Сарвари гурӯҳ
+                                </h6>
+                                <p class="mb-0 small">
+                                    Метавонад гурӯҳ эҷод кунад, аъзоро идора кунад ва викторинаҳои гурӯҳӣ оғоз кунад.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Password strength indicator
+        const password1 = document.getElementById('password1');
+        const password2 = document.getElementById('password2');
+        
+        function checkPasswordStrength(password) {
+            let strength = 0;
+            
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            return strength;
+        }
+        
+        function updatePasswordStrength() {
+            const strength = checkPasswordStrength(password1.value);
+            const strengthText = ['ҳеч', 'суст', 'миёна', 'қавӣ', 'хеле қавӣ'][strength];
+            const strengthColors = ['danger', 'warning', 'info', 'primary', 'success'][strength];
+            
+            // You can add a visual indicator here if needed
+            console.log('Password strength:', strengthText);
+        }
+        
+        function validatePasswords() {
+            if (password1.value !== password2.value && password2.value !== '') {
+                password2.classList.add('is-invalid');
+                password2.classList.remove('is-valid');
+            } else if (password2.value !== '') {
+                password2.classList.remove('is-invalid');
+                password2.classList.add('is-valid');
+            }
+        }
+        
+        password1.addEventListener('input', function() {
+            updatePasswordStrength();
+            validatePasswords();
+        });
+        
+        password2.addEventListener('input', validatePasswords);
+        
+        // Autofocus on username
+        document.getElementById('username').focus();
+    });
+</script>
+
+
+{% endblock %}

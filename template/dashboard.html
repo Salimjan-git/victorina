@@ -1,0 +1,474 @@
+<!-- templates/dashboard.html -->
+{% extends 'base.html' %}
+
+{% block title %}Дашборд - Системаи Викторинаҳо{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Welcome Message -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-0 bg-light">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 fw-bold mb-1">
+                                Хуш омадед, {{ user.get_full_name|default:user.username }}!
+                            </h1>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                {{ current_date|date:"l, d F Y" }}
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-primary fs-6">
+                                {{ user.get_role_display }}
+                            </span>
+                            {% if profile %}
+                            <p class="text-muted mb-0 mt-1 small">
+                                <i class="fas fa-graduation-cap"></i>
+                                {{ profile.level_display }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if user.role == 'admin' %}
+    <!-- Admin Dashboard -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="card-title">{{ total_users }}</h2>
+                            <p class="card-text mb-0">Истифодабарандагон</p>
+                        </div>
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="card-title">{{ total_quizzes }}</h2>
+                            <p class="card-text mb-0">Викторинаҳо</p>
+                        </div>
+                        <i class="fas fa-question-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="card-title">{{ active_quizzes }}</h2>
+                            <p class="card-text mb-0">Викторинаҳои фаъол</p>
+                        </div>
+                        <i class="fas fa-play-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="card-title">{{ total_groups }}</h2>
+                            <p class="card-text mb-0">Гурӯҳҳо</p>
+                        </div>
+                        <i class="fas fa-users-cog fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history me-2"></i> Охирин амалҳо
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_logs %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Вақт</th>
+                                    <th>Истифодабаранда</th>
+                                    <th>Амал</th>
+                                    <th>Деталҳо</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in recent_logs %}
+                                <tr>
+                                    <td>{{ log.created_at|date:"H:i" }}</td>
+                                    <td>{{ log.user.username|default:"Система" }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            {{ log.get_action_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ log.model }} #{{ log.object_id }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Амалҳо вуҷуд надоранд</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i> Амалҳои тез
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{% url 'user_create' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-user-plus me-2"></i> Эҷоди истифодабаранда
+                        </a>
+                        <a href="{% url 'quiz_create' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-plus-circle me-2"></i> Эҷоди викторина
+                        </a>
+                        <a href="{% url 'subject_create' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-book me-2"></i> Иловаи фан
+                        </a>
+                        <a href="{% url 'group_create' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-users me-2"></i> Эҷоди гурӯҳ
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% elif user.role == 'teacher' %}
+    <!-- Teacher Dashboard -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="card-title">{{ my_quizzes_count }}</h2>
+                            <p class="card-text mb-0">Викторинаҳои ман</p>
+                        </div>
+                        <i class="fas fa-question-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="card-title">{{ active_quizzes_count }}</h2>
+                            <p class="card-text mb-0">Викторинаҳои фаъол</p>
+                        </div>
+                        <i class="fas fa-play-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="card-title">{{ total_students }}</h2>
+                            <p class="card-text mb-0">Талабагон</p>
+                        </div>
+                        <i class="fas fa-user-graduate fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2"></i> Охирин натиҷаҳо
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_results %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Талаба</th>
+                                    <th>Викторина</th>
+                                    <th>Балл</th>
+                                    <th>Вақт</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in recent_results %}
+                                <tr>
+                                    <td>{{ result.user.username }}</td>
+                                    <td>{{ result.quiz.title }}</td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            {{ result.score }}/{{ result.total_questions }}
+                                        </span>
+                                    </td>
+                                    <td>{{ result.completed_at|timesince }} пеш</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Ҳоло натиҷае вуҷуд надорад</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i> Амалҳои тез
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{% url 'quiz_create' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-plus-circle me-2"></i> Эҷоди викторинаи нав
+                        </a>
+                        <a href="{% url 'quiz_list' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-list me-2"></i> Дидани ҳамаи викторинаҳо
+                        </a>
+                        <a href="{% url 'group_create' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-users me-2"></i> Эҷоди гурӯҳи нав
+                        </a>
+                        <a href="{% url 'subject_create' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-book me-2"></i> Иловаи фан
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Student/Group Leader Dashboard -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="card-title">{{ available_quizzes_count }}</h2>
+                            <p class="card-text mb-0">Викторинаҳои дастрас</p>
+                        </div>
+                        <i class="fas fa-play-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="card-title">{{ total_completed }}</h2>
+                            <p class="card-text mb-0">Викторинаҳои анҷомдода</p>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="card-title">{{ my_groups_count }}</h2>
+                            <p class="card-text mb-0">Гурӯҳҳои ман</p>
+                        </div>
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Quizzes -->
+    {% if available_quizzes %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-play-circle me-2"></i> Викторинаҳои дастрас
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for quiz in available_quizzes %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ quiz.title }}</h5>
+                                    <p class="card-text text-muted small mb-2">
+                                        {{ quiz.subject.name }} | 
+                                        <span class="badge bg-info">
+                                            {{ quiz.get_quiz_mode_display }}
+                                        </span>
+                                    </p>
+                                    <p class="card-text">{{ quiz.description|truncatechars:100 }}</p>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock"></i>
+                                            {{ quiz.end_time|timeuntil }} монд
+                                        </span>
+                                        
+                                        <a href="{% url 'quiz_start' quiz.pk %}" class="btn btn-sm btn-success">
+                                            <i class="fas fa-play"></i> Оғоз
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- My Results -->
+    {% if completed_sessions %}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-line me-2"></i> Охирин натиҷаҳои ман
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Викторина</th>
+                                    <th>Балл</th>
+                                    <th>Фоиз</th>
+                                    <th>Вақт</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for session in completed_sessions %}
+                                {% with result=session.result_set.first %}
+                                {% if result %}
+                                <tr>
+                                    <td>{{ session.quiz.title }}</td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            {{ result.score }}/{{ result.total_questions }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-success" 
+                                                 style="width: {{ result.percentage }}%">
+                                                {{ result.percentage|floatformat:1 }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ session.finished_at|date:"d.m.Y" }}</td>
+                                </tr>
+                                {% endif %}
+                                {% endwith %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie me-2"></i> Омори ман
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if total_completed > 0 %}
+                    <div class="mb-3">
+                        <h2>{{ total_completed }}</h2>
+                        <p class="text-muted mb-0">Викторинаҳои анҷомдода</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h2>{{ available_quizzes_count }}</h2>
+                        <p class="text-muted mb-0">Викторинаҳои дастрас</p>
+                    </div>
+                    
+                    <a href="{% url 'my_results' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-chart-line me-2"></i> Дидани ҳамаи натиҷаҳо
+                    </a>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Шумо ҳоло ягон викторинаро анҷом надодаед</p>
+                        <a href="{% url 'quiz_list' %}" class="btn btn-primary">
+                            <i class="fas fa-play me-2"></i> Оғози викторина
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

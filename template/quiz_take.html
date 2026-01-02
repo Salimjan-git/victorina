@@ -1,0 +1,416 @@
+<!-- templates/quiz_take.html -->
+{% extends "base.html" %}
+
+{% block title %}Иҷрои викторина: {{ quiz_session.quiz.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.quiz-timer {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+.question-card {
+    border-left: 4px solid #4361ee;
+}
+
+.answer-option {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.answer-option:hover {
+    background-color: #f8f9fa;
+    border-color: #4361ee;
+}
+
+.answer-option.selected {
+    background-color: rgba(67, 97, 238, 0.1);
+    border-color: #4361ee;
+}
+
+.question-nav-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-bar {
+    height: 8px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Quiz Header -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h2 class="fw-bold mb-1">{{ quiz_session.quiz.title }}</h2>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-book me-1"></i> {{ quiz_session.quiz.subject.name }}
+                    </p>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-md-end align-items-center">
+                        <div class="text-center me-4">
+                            <div class="quiz-timer display-6 fw-bold text-danger" id="quizTimer">
+                                {{ time_left }}
+                            </div>
+                            <small class="text-muted">Вақти боқимонда</small>
+                        </div>
+                        
+                        <div>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#finishModal">
+                                <i class="fas fa-flag-checkered me-2"></i> Анҷом додан
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="mt-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <small>Пешрафт</small>
+                    <small>{{ current_question_number }}/{{ total_questions }}</small>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar bg-primary" role="progressbar" 
+                         style="width: {{ progress_percentage }}%">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Question Area -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm question-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h4 class="fw-bold">
+                                Савол №{{ current_question_number }}
+                            </h4>
+                            <p class="text-muted mb-0">
+                                {{ question.get_type_display }}
+                            </p>
+                        </div>
+                        
+                        <span class="badge bg-info fs-6">
+                            {{ question.points }} хол
+                        </span>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5 class="fw-normal">{{ question.text }}</h5>
+                        
+                        {% if question.image %}
+                        <div class="text-center my-4">
+                            <img src="{{ question.image.url }}" alt="Question image" class="img-fluid rounded" style="max-height: 300px;">
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Answers -->
+                    <form id="answerForm" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="question_id" value="{{ question.id }}">
+                        
+                        {% if question.type == 'multiple_choice' %}
+                        <div class="list-group">
+                            {% for option in question.options.all %}
+                            <div class="list-group-item answer-option {% if option.id in selected_answers %}selected{% endif %}"
+                                 data-option-id="{{ option.id }}">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           name="selected_options" 
+                                           value="{{ option.id }}"
+                                           id="option{{ option.id }}"
+                                           {% if option.id in selected_answers %}checked{% endif %}>
+                                    <label class="form-check-label w-100" for="option{{ option.id }}">
+                                        {{ option.text }}
+                                        {% if option.is_correct and show_correct %}
+                                        <span class="badge bg-success float-end">Дуруст</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% elif question.type == 'true_false' %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="card answer-option {% if 'true' in selected_answers %}selected{% endif %}"
+                                     style="cursor: pointer;">
+                                    <div class="card-body text-center">
+                                        <input type="radio" class="form-check-input" 
+                                               name="selected_options" 
+                                               value="true"
+                                               id="trueOption"
+                                               {% if 'true' in selected_answers %}checked{% endif %}
+                                               style="display: none;">
+                                        <h3 class="mb-0">
+                                            <i class="fas fa-check-circle text-success fa-2x"></i>
+                                        </h3>
+                                        <h5 class="mt-2">Дуруст</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card answer-option {% if 'false' in selected_answers %}selected{% endif %}"
+                                     style="cursor: pointer;">
+                                    <div class="card-body text-center">
+                                        <input type="radio" class="form-check-input" 
+                                               name="selected_options" 
+                                               value="false"
+                                               id="falseOption"
+                                               {% if 'false' in selected_answers %}checked{% endif %}
+                                               style="display: none;">
+                                        <h3 class="mb-0">
+                                            <i class="fas fa-times-circle text-danger fa-2x"></i>
+                                        </h3>
+                                        <h5 class="mt-2">Нодуруст</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% elif question.type == 'short_answer' %}
+                        <div class="mb-3">
+                            <textarea class="form-control" name="short_answer" rows="3" 
+                                      placeholder="Ҷавоби худро инҷо нависед...">{{ selected_answers.0|default:'' }}</textarea>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mt-4">
+                            <button type="button" class="btn btn-primary" id="saveAnswerBtn">
+                                <i class="fas fa-save me-2"></i> Ҷавобро захира кунед
+                            </button>
+                            <div class="alert alert-success mt-2 d-none" id="saveSuccess">
+                                <i class="fas fa-check-circle me-2"></i> Ҷавоб бомуваффақият захира шуд!
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="d-flex justify-content-between mt-4">
+                <div>
+                    {% if has_previous_question %}
+                    <a href="?question={{ previous_question_number }}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i> Саволи қаблӣ
+                    </a>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    {% if has_next_question %}
+                    <a href="?question={{ next_question_number }}" class="btn btn-primary">
+                        Саволи навбатӣ <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                    {% else %}
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#finishModal">
+                        <i class="fas fa-flag-checkered me-2"></i> Анҷом додани викторина
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Question Navigator -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-map me-2"></i>
+                        Навигатори саволҳо
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2 mb-3">
+                        {% for q in questions %}
+                        <div class="col-3 col-sm-2">
+                            <a href="?question={{ forloop.counter }}" 
+                               class="btn d-block question-nav-btn 
+                                      {% if forloop.counter == current_question_number %}btn-primary
+                                      {% elif q.id in answered_questions %}btn-success
+                                      {% else %}btn-outline-secondary{% endif %}">
+                                {{ forloop.counter }}
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between">
+                            <span>Ҷавобдодашуда</span>
+                            <span class="badge bg-success">{{ answered_questions|length }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between">
+                            <span>Ҷавобнашуда</span>
+                            <span class="badge bg-danger">{{ total_questions|add:"-answered_questions|length" }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between">
+                            <span>Саволҳои боқимонда</span>
+                            <span class="badge bg-warning">{{ remaining_questions }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Finish Quiz Modal -->
+<div class="modal fade" id="finishModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Анҷом додани викторина
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Оё шумо мутмаин ҳастед, ки мехоҳед викторинаро анҷом диҳед?</p>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Пас аз анҷом додани викторина:
+                    <ul class="mb-0 mt-2">
+                        <li>Ҷавобҳои шумо барои таҳлил фиристода мешаванд</li>
+                        <li>Натиҷаи ниҳоӣ ҳисоб карда мешавад</li>
+                        <li>Натиҷаҳои шумо дар профил сабт мешаванд</li>
+                    </ul>
+                </div>
+                
+                <div class="text-center">
+                    <div class="display-6 fw-bold text-primary">
+                        {{ answered_questions|length }}/{{ total_questions }}
+                    </div>
+                    <p class="text-muted">Саволҳои ҷавобдодашуда</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Бекор кардан</button>
+                <a href="{% url 'quiz_finish' quiz_session.pk %}" class="btn btn-warning">
+                    <i class="fas fa-flag-checkered me-2"></i> Бале, анҷом диҳед
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Timer functionality
+    let timeLeft = {{ time_left_seconds }};
+    const timerElement = $('#quizTimer');
+    
+    function updateTimer() {
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            window.location.href = "{% url 'quiz_finish' quiz_session.pk %}";
+            return;
+        }
+        
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerElement.text(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+        
+        // Change color when time is running out
+        if (timeLeft <= 60) {
+            timerElement.addClass('text-danger');
+        } else if (timeLeft <= 300) {
+            timerElement.addClass('text-warning');
+        }
+        
+        timeLeft--;
+    }
+    
+    // Start timer
+    let timerInterval = setInterval(updateTimer, 1000);
+    updateTimer(); // Initial call
+    
+    // Auto-save answer every 30 seconds
+    setInterval(function() {
+        if ($('#answerForm').length) {
+            $('#saveAnswerBtn').click();
+        }
+    }, 30000);
+    
+    // Answer selection
+    $('.answer-option').click(function() {
+        if ($(this).hasClass('card')) {
+            // For true/false cards
+            $(this).parent().find('.card').removeClass('selected');
+            $(this).addClass('selected');
+            $(this).find('input[type="radio"]').prop('checked', true);
+        } else {
+            // For multiple choice list items
+            const checkbox = $(this).find('input[type="checkbox"]');
+            checkbox.prop('checked', !checkbox.prop('checked'));
+            $(this).toggleClass('selected', checkbox.prop('checked'));
+        }
+    });
+    
+    // Save answer via AJAX
+    $('#saveAnswerBtn').click(function() {
+        const formData = $('#answerForm').serialize();
+        
+        $.ajax({
+            url: "{% url 'save_answer_ajax' %}",
+            type: "POST",
+            data: formData,
+            success: function(response) {
+                $('#saveSuccess').removeClass('d-none');
+                setTimeout(function() {
+                    $('#saveSuccess').addClass('d-none');
+                }, 2000);
+                
+                // Update question navigator
+                const currentQuestionBtn = $(`.question-nav-btn:contains('{{ current_question_number }}')`);
+                currentQuestionBtn.removeClass('btn-outline-secondary').addClass('btn-success');
+            },
+            error: function(xhr, status, error) {
+                alert('Хатоги дар захираи ҷавоб!');
+            }
+        });
+    });
+    
+    // Check time via AJAX periodically
+    setInterval(function() {
+        $.ajax({
+            url: "{% url 'check_quiz_time' quiz_session.quiz.pk %}",
+            type: "GET",
+            success: function(response) {
+                if (response.time_left <= 0) {
+                    window.location.href = "{% url 'quiz_finish' quiz_session.pk %}";
+                }
+            }
+        });
+    }, 10000);
+    
+    // Warn before leaving
+    window.addEventListener('beforeunload', function(e) {
+        e.preventDefault();
+        e.returnValue = 'Шумо ҷавобҳои захиранашуда доред. Оё мутмаин ҳастед, ки мехоҳед саҳифаро тарк кунед?';
+    });
+});
+
+</script>
+{% endblock %}

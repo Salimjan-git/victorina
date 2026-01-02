@@ -1,0 +1,118 @@
+<!-- templates/auth/login.html -->
+{% extends 'base.html' %}
+
+{% block title %}Воридшавӣ - Системаи Викторинаҳо{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h3 class="mb-0">
+                        <i class="fas fa-sign-in-alt"></i> Воридшавӣ
+                    </h3>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="username" class="form-label">
+                                <i class="fas fa-user"></i> Номи истифодабарӣ
+                            </label>
+                            <input type="text" 
+                                   name="username" 
+                                   id="username" 
+                                   class="form-control form-control-lg"
+                                   placeholder="Номи истифодабариро ворид кунед"
+                                   required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock"></i> Парол
+                            </label>
+                            <input type="password" 
+                                   name="password" 
+                                   id="password" 
+                                   class="form-control form-control-lg"
+                                   placeholder="Пароли худро ворид кунед"
+                                   required>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember">
+                            <label class="form-check-label" for="remember">Маро дар ёд дор</label>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt"></i> Воридшавӣ
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <p class="mb-2">
+                            Ҳанӯз ҳисоби истифодабарӣ надоред?
+                            <a href="{% url 'register' %}" class="text-decoration-none">
+                                Бақайдгирӣ кунед
+                            </a>
+                        </p>
+                        <p class="mb-0">
+                            <a href="#" class="text-decoration-none">
+                                <i class="fas fa-key"></i> Парол фаромӯш шудааст?
+                            </a>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="card-footer text-center py-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> 
+                        Барои дохил шудан ба система номи истифодабарӣ ва пароли худро ворид кунед.
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Role Info -->
+            <div class="card mt-4 shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-info-circle text-info"></i> Намунаҳои воридшавӣ:
+                    </h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <ul class="list-unstyled">
+                                <li><small><strong>Муаллим:</strong></small></li>
+                                <li><small>Номи истифодабарӣ: teacher1</small></li>
+                                <li><small>Парол: 12345678</small></li>
+                            </ul>
+                        </div>
+                        <div class="col-6">
+                            <ul class="list-unstyled">
+                                <li><small><strong>Талаба:</strong></small></li>
+                                <li><small>Номи истифодабарӣ: student1</small></li>
+                                <li><small>Парол: 12345678</small></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Фокуси автобар номи истифодабарӣ
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('username').focus();
+    });
+</script>
+{% endblock %}

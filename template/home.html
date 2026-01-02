@@ -1,0 +1,180 @@
+<!-- templates/home.html -->
+{% extends 'base.html' %}
+
+{% block title %}Системаи Викторинаҳо - Саҳифаи асосӣ{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="row align-items-center py-5">
+        <div class="col-lg-6">
+            <h1 class="display-4 fw-bold mb-4">
+                <i class="fas fa-brain text-primary"></i> Системаи Викторинаҳо
+            </h1>
+            <p class="lead mb-4">
+                Платформаи муосир барои гузаронидани тестҳо ва викторинаҳо. 
+                Барои муаллимон, донишҷӯён ва талабагон дар мактабҳо ва донишгоҳҳо.
+            </p>
+            <div class="d-grid gap-2 d-md-flex">
+                <a href="{% url 'login' %}" class="btn btn-primary btn-lg px-4">
+                    <i class="fas fa-sign-in-alt me-2"></i> Воридшавӣ
+                </a>
+                <a href="{% url 'register' %}" class="btn btn-outline-primary btn-lg px-4">
+                    <i class="fas fa-user-plus me-2"></i> Бақайдгирӣ
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-6 text-center">
+            <img src="https://cdn-icons-png.flaticon.com/512/2232/2232688.png" 
+                 alt="Quiz System" class="img-fluid" style="max-height: 300px;">
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row py-5">
+        <div class="col-12 text-center mb-5">
+            <h2 class="fw-bold">Хусусиятҳои система</h2>
+            <p class="text-muted">Система барои талабагон ва муаллимон хусусиятҳои гуногун дорад</p>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center border-0">
+                <div class="card-body p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h4 class="card-title mb-3">Барои мактаб ва донишгоҳ</h4>
+                    <p class="card-text text-muted">
+                        Барои синфҳои 1-11 ва курсҳои 1-4. Система барои ҳар ду намуди таҳсилот мувофиқ аст.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center border-0">
+                <div class="card-body p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h4 class="card-title mb-3">Индивидуалӣ ва гурӯҳӣ</h4>
+                    <p class="card-text text-muted">
+                        Тестҳоро ба таври индивидуалӣ ё гурӯҳӣ гузаронед. Гурӯҳҳо метавонанд бо ҳам мусобиқа кунанд.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center border-0">
+                <div class="card-body p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4 class="card-title mb-3">Омор ва таҳлил</h4>
+                    <p class="card-text text-muted">
+                        Натиҷаҳои муфассал ва таҳлилҳои оморӣ. Муаллимон метавонанд пешрафти донишҷӯёнро пайгирӣ кунанд.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="row py-5 bg-light rounded-3 mb-5">
+        <div class="col-md-3 text-center mb-4">
+            <div class="p-4">
+                <h2 class="display-4 fw-bold text-primary">{{ total_users|default:"0" }}</h2>
+                <p class="text-muted mb-0">Истифодабарандагон</p>
+            </div>
+        </div>
+        <div class="col-md-3 text-center mb-4">
+            <div class="p-4">
+                <h2 class="display-4 fw-bold text-success">{{ total_quizzes|default:"0" }}</h2>
+                <p class="text-muted mb-0">Викторинаҳо</p>
+            </div>
+        </div>
+        <div class="col-md-3 text-center mb-4">
+            <div class="p-4">
+                <h2 class="display-4 fw-bold text-info">{{ active_quizzes|default:"0" }}</h2>
+                <p class="text-muted mb-0">Викторинаҳои фаъол</p>
+            </div>
+        </div>
+        <div class="col-md-3 text-center mb-4">
+            <div class="p-4">
+                <h2 class="display-4 fw-bold text-warning">{{ total_groups|default:"0" }}</h2>
+                <p class="text-muted mb-0">Гурӯҳҳо</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="row py-5">
+        <div class="col-12 text-center mb-5">
+            <h2 class="fw-bold">Чӣ гуна кор мекунад?</h2>
+            <p class="text-muted">3 қадами содда барои истифода</p>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0">
+                <div class="card-body p-4">
+                    <div class="step-number mb-3">
+                        <span class="badge bg-primary rounded-circle p-3">1</span>
+                    </div>
+                    <h4 class="card-title mb-3">Бақайдгирӣ кунед</h4>
+                    <p class="card-text text-muted">
+                        Барои ройгон ба система бақайд шавед. Роли худро (талиба, муаллим ё сарвари гурӯҳ) интихоб кунед.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0">
+                <div class="card-body p-4">
+                    <div class="step-number mb-3">
+                        <span class="badge bg-success rounded-circle p-3">2</span>
+                    </div>
+                    <h4 class="card-title mb-3">Викторина гузаронед</h4>
+                    <p class="card-text text-muted">
+                        Дар викторинаҳои дастрас иштирок кунед ё барои талабагонатон викторина эҷод кунед.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0">
+                <div class="card-body p-4">
+                    <div class="step-number mb-3">
+                        <span class="badge bg-info rounded-circle p-3">3</span>
+                    </div>
+                    <h4 class="card-title mb-3">Натиҷаҳоро бубинед</h4>
+                    <p class="card-text text-muted">
+                        Натиҷаҳои фаврӣ, таҳлили муфассал ва рейтингҳоро дида бароед.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="row justify-content-center py-5">
+        <div class="col-md-8 text-center">
+            <h2 class="fw-bold mb-4">Оғози кор бо мо</h2>
+            <p class="lead mb-4">
+                Ба системаи мо ҳамроҳ шавед ва аз хусусиятҳои пешрафтаи он баҳраманд шавед. 
+                Барои мактабҳо ва донишгоҳҳо ройгон аст.
+            </p>
+            <div class="d-grid gap-3 d-md-flex justify-content-center">
+                <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-5">
+                    <i class="fas fa-user-plus me-2"></i> Бақайдгирии ройгон
+                </a>
+                <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg px-5">
+                    <i class="fas fa-sign-in-alt me-2"></i> Воридшавӣ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
