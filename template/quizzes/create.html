@@ -20,27 +20,6 @@
         margin-bottom: 1.5rem;
     }
     
-    .question-preview {
-        border-left: 4px solid #4361ee;
-        padding-left: 1rem;
-        margin-bottom: 1rem;
-        background: #f8f9fa;
-        border-radius: 5px;
-        padding: 1rem;
-    }
-    
-    .option-item {
-        margin-bottom: 0.5rem;
-        padding: 0.5rem;
-        border-radius: 5px;
-        border: 1px solid #dee2e6;
-    }
-    
-    .option-item.correct {
-        border-color: #28a745;
-        background-color: rgba(40, 167, 69, 0.1);
-    }
-    
     .step-indicator {
         display: flex;
         align-items: center;
@@ -118,14 +97,6 @@
         margin-bottom: 0.5rem;
         color: #4361ee;
     }
-    
-    .answer-option-input {
-        border-left: 3px solid #6c757d;
-    }
-    
-    .answer-option-input.correct {
-        border-left-color: #28a745;
-    }
 </style>
 {% endblock %}
 
@@ -147,11 +118,6 @@
             <div class="step-number">3</div>
             <div class="step-label">Танзимот</div>
         </div>
-        <div class="step-line"></div>
-        <div class="step" id="step4">
-            <div class="step-number">4</div>
-            <div class="step-label">Тасдиқ</div>
-        </div>
     </div>
     
     <h1 class="display-5 fw-bold mb-4">
@@ -159,7 +125,17 @@
         Эҷоди викторинаи нав
     </h1>
     
-    <form method="post" id="quizCreateForm" enctype="multipart/form-data">
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4">
+            <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="post" id="quizCreateForm" action="{% url 'quiz_create' %}">
         {% csrf_token %}
         
         <!-- Step 1: Basic Information -->
@@ -172,54 +148,96 @@
                 <p class="text-muted mb-0">Маълумоти асосии викторинаро пур кунед</p>
             </div>
             
-            <div class="row">
-                <div class="col-md-8 mb-3">
-                    <label for="id_title" class="form-label fw-bold">Унвони викторина</label>
-                    <input type="text" class="form-control form-control-lg" 
-                           id="id_title" name="title" required
-                           placeholder="Масалан: Тести математикаи ҳисоббарор">
-                    <div class="form-text">Унвони равшан ва муайян ба корбарон кӯмак мекунад</div>
-                </div>
-                
-                <div class="col-md-4 mb-3">
+            <!-- Title -->
+            <div class="mb-3">
+                <label for="id_title" class="form-label fw-bold">Унвони викторина *</label>
+                <input type="text" class="form-control form-control-lg" 
+                       id="id_title" name="title" required
+                       placeholder="Масалан: Тести математикаи ҳисоббарор">
+                <div class="form-text">Унвони равшан ва муайян ба корбарон кӯмак мекунад</div>
+            </div>
+            
+            <!-- Subject and Description -->
+            <div class="row mb-3">
+                <div class="col-md-6">
                     <label for="id_subject" class="form-label fw-bold">Фан</label>
-                    <select class="form-select" id="id_subject" name="subject" required>
-                        <option value="" selected disabled>Фанро интихоб кунед</option>
+                    <select class="form-select" id="id_subject" name="subject">
+                        <option value="" selected>Без фан (ихтиёрӣ)</option>
                         {% for subject in subjects %}
                         <option value="{{ subject.id }}">{{ subject.name }}</option>
+                        {% empty %}
+                        <option disabled>Ягон фан вуҷуд надорад</option>
                         {% endfor %}
                     </select>
                 </div>
-            </div>
-            
-            <div class="mb-3">
-                <label for="id_description" class="form-label fw-bold">Тавсифи викторина</label>
-                <textarea class="form-control" id="id_description" name="description" 
-                          rows="4" placeholder="Тавсифи викторинаро дар ин ҷо нависед..."></textarea>
-                <div class="form-text">Тавсифи муфассал ба донишҷӯён кӯмак мекунад, ки чӣ чизҳоро интизор шаванд</div>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="id_duration" class="form-label fw-bold">Мӯҳлати вақт (дақиқа)</label>
-                    <div class="input-group">
-                        <input type="number" class="form-control" id="id_duration" 
-                               name="duration" min="1" max="180" value="30" required>
-                        <span class="input-group-text">дақиқа</span>
-                    </div>
-                    <div class="form-text">Муқаррар кардани мӯҳлати вақт барои иҷрои викторина</div>
-                </div>
                 
-                <div class="col-md-6 mb-3">
-                    <label for="id_difficulty" class="form-label fw-bold">Мураккабӣ</label>
-                    <select class="form-select" id="id_difficulty" name="difficulty">
-                        <option value="easy">Осон</option>
-                        <option value="medium" selected>Миёна</option>
-                        <option value="hard">Душвор</option>
+                <div class="col-md-6">
+                    <label for="id_quiz_mode" class="form-label fw-bold">Реҷаи викторина *</label>
+                    <select class="form-select" id="id_quiz_mode" name="quiz_mode" required>
+                        <option value="individual" selected>Индивидуалӣ</option>
+                        <option value="group">Гурӯҳӣ</option>
                     </select>
                 </div>
             </div>
             
+            <!-- Description -->
+            <div class="mb-3">
+                <label for="id_description" class="form-label fw-bold">Тавсифи викторина</label>
+                <textarea class="form-control" id="id_description" name="description" 
+                          rows="3" placeholder="Тавсифи викторинаро дар ин ҷо нависед..."></textarea>
+                <div class="form-text">Тавсифи муфассал ба донишҷӯён кӯмак мекунад, ки чӣ чизҳоро интизор шаванд</div>
+            </div>
+            
+            <!-- Level Settings -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="id_level_type" class="form-label fw-bold">Навъи сатҳ *</label>
+                    <select class="form-select" id="id_level_type" name="level_type" required>
+                        <option value="school" selected>Мактаб</option>
+                        <option value="university">Донишгоҳ</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="id_start_level" class="form-label fw-bold">Сатҳи оғоз *</label>
+                    <input type="number" class="form-control" id="id_start_level" 
+                           name="start_level" min="1" max="20" value="1" required>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="id_end_level" class="form-label fw-bold">Сатҳи анҷом *</label>
+                    <input type="number" class="form-control" id="id_end_level" 
+                           name="end_level" min="1" max="20" value="10" required>
+                </div>
+            </div>
+            
+            <!-- Time Settings -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="id_start_time" class="form-label fw-bold">Вақти оғоз *</label>
+                    <input type="datetime-local" class="form-control" 
+                           id="id_start_time" name="start_time" required>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="id_end_time" class="form-label fw-bold">Вақти анҷом *</label>
+                    <input type="datetime-local" class="form-control" 
+                           id="id_end_time" name="end_time" required>
+                </div>
+            </div>
+            
+            <!-- Time Limit -->
+            <div class="mb-3">
+                <label for="id_duration" class="form-label fw-bold">Мӯҳлати вақт (дақиқа) *</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="id_duration" 
+                           name="duration" min="1" max="180" value="30" required>
+                    <span class="input-group-text">дақиқа</span>
+                </div>
+                <div class="form-text">Муқаррар кардани мӯҳлати вақт барои иҷрои викторина</div>
+            </div>
+            
+            <!-- Navigation -->
             <div class="d-flex justify-content-between">
                 <div></div>
                 <button type="button" class="btn btn-primary" onclick="goToStep(2)">
@@ -238,180 +256,71 @@
                 <p class="text-muted mb-0">Саволҳои викторинаро илова кунед</p>
             </div>
             
-            <!-- Question Type Selection -->
-            <div class="mb-4">
-                <h6 class="fw-bold mb-3">Намуди савол</h6>
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <div class="question-type-btn active" data-type="multiple_choice" onclick="selectQuestionType('multiple_choice')">
-                            <div class="question-type-icon">
-                                <i class="fas fa-list-ol"></i>
-                            </div>
-                            <h6>Чандҷавобӣ</h6>
-                            <small class="text-muted">Як ё чанд ҷавоби дуруст</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="question-type-btn" data-type="true_false" onclick="selectQuestionType('true_false')">
-                            <div class="question-type-icon">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                            <h6>Дуруст/Нодуруст</h6>
-                            <small class="text-muted">Ҷавоби дуруст ё нодуруст</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="question-type-btn" data-type="short_answer" onclick="selectQuestionType('short_answer')">
-                            <div class="question-type-icon">
-                                <i class="fas fa-keyboard"></i>
-                            </div>
-                            <h6>Ҷавоби кӯтоҳ</h6>
-                            <small class="text-muted">Ҷавоби кӯтоҳ бо матн</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="question-type-btn" data-type="matching" onclick="selectQuestionType('matching')">
-                            <div class="question-type-icon">
-                                <i class="fas fa-exchange-alt"></i>
-                            </div>
-                            <h6>Мувофиқсозӣ</h6>
-                            <small class="text-muted">Ҷуфтҳои мувофиқро мувофиқ кунед</small>
-                        </div>
-                    </div>
-                </div>
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Шумо метавонед саволҳо пас аз эҷоди викторина илова кунед. Барои идома кардан тугмаи "Захира кардан"-ро пахш кунед.
             </div>
             
-            <!-- Questions Container -->
-            <div id="questionsContainer">
-                <div class="question-preview" id="questionTemplate" style="display: none;">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h6 class="fw-bold">Савол #<span class="question-number">1</span></h6>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuestion(this)">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                    
+            <!-- Simple Question Form (optional) -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Саволи аввал (ихтиёрӣ)</h5>
+                </div>
+                <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label fw-bold">Матни савол</label>
-                        <textarea class="form-control question-text" rows="3" 
-                                  placeholder="Матни саволро дар ин ҷо нависед..."></textarea>
+                        <textarea class="form-control" name="question_text" rows="3" 
+                                  placeholder="Матни саволи аввалро дар ин ҷо нависед..."></textarea>
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Аломатҳо</label>
-                        <input type="number" class="form-control question-points" 
-                               min="1" max="100" value="10" placeholder="10">
+                        <label class="form-label fw-bold">Ҳаққҳо</label>
+                        <input type="number" class="form-control" name="question_points" 
+                               min="1" max="100" value="10">
                     </div>
                     
-                    <!-- Options for Multiple Choice -->
-                    <div class="question-options multiple-choice-options">
-                        <label class="form-label fw-bold">Гузоришҳо</label>
-                        <div class="options-container">
-                            <div class="option-item">
-                                <div class="d-flex align-items-center">
-                                    <input type="checkbox" class="form-check-input me-2 correct-option">
-                                    <input type="text" class="form-control option-text" placeholder="Матни гузориш">
-                                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="removeOption(this)">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Ҷавобҳо</label>
+                        <div class="mb-2">
+                            <input type="text" class="form-control mb-2" name="answer_1" 
+                                   placeholder="Ҷавоби 1">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="correct_answer" value="1">
+                                <label class="form-check-label">Ин ҷавоб дуруст аст</label>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addOption(this)">
-                            <i class="fas fa-plus me-1"></i> Иловаи гузориши нав
-                        </button>
-                    </div>
-                    
-                    <!-- True/False Options -->
-                    <div class="question-options true-false-options" style="display: none;">
-                        <label class="form-label fw-bold">Ҷавоби дуруст</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="true_false_1" value="true">
-                            <label class="form-check-label">Дуруст</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="true_false_1" value="false">
-                            <label class="form-check-label">Нодуруст</label>
-                        </div>
-                    </div>
-                    
-                    <!-- Short Answer Options -->
-                    <div class="question-options short-answer-options" style="display: none;">
-                        <label class="form-label fw-bold">Ҷавоби дуруст</label>
-                        <input type="text" class="form-control" placeholder="Ҷавоби дурустро дар ин ҷо нависед">
-                    </div>
-                    
-                    <!-- Matching Options -->
-                    <div class="question-options matching-options" style="display: none;">
-                        <label class="form-label fw-bold">Ҷуфтҳои мувофиқ</label>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <input type="text" class="form-control mb-2" placeholder="Маънои 1">
-                                <input type="text" class="form-control mb-2" placeholder="Маънои 2">
+                        
+                        <div class="mb-2">
+                            <input type="text" class="form-control mb-2" name="answer_2" 
+                                   placeholder="Ҷавоби 2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="correct_answer" value="2">
+                                <label class="form-check-label">Ин ҷавоб дуруст аст</label>
                             </div>
-                            <div class="col-md-6">
-                                <input type="text" class="form-control mb-2" placeholder="Таърифи 1">
-                                <input type="text" class="form-control mb-2" placeholder="Таърифи 2">
+                        </div>
+                        
+                        <div class="mb-2">
+                            <input type="text" class="form-control mb-2" name="answer_3" 
+                                   placeholder="Ҷавоби 3 (ихтиёрӣ)">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="correct_answer" value="3">
+                                <label class="form-check-label">Ин ҷавоб дуруст аст</label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <input type="text" class="form-control mb-2" name="answer_4" 
+                                   placeholder="Ҷавоби 4 (ихтиёрӣ)">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="correct_answer" value="4">
+                                <label class="form-check-label">Ин ҷавоб дуруст аст</label>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Initial Question -->
-                <div class="question-preview">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h6 class="fw-bold">Савол #<span class="question-number">1</span></h6>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuestion(this)" disabled>
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Матни савол</label>
-                        <textarea class="form-control question-text" name="questions[0][text]" 
-                                  rows="3" placeholder="Матни саволро дар ин ҷо нависед..." required></textarea>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Аломатҳо</label>
-                        <input type="number" class="form-control question-points" name="questions[0][points]"
-                               min="1" max="100" value="10" required>
-                    </div>
-                    
-                    <div class="question-options multiple-choice-options">
-                        <label class="form-label fw-bold">Гузоришҳо</label>
-                        <div class="options-container">
-                            {% for i in "1234" %}
-                            <div class="option-item">
-                                <div class="d-flex align-items-center">
-                                    <input type="checkbox" class="form-check-input me-2 correct-option" 
-                                           name="questions[0][options][{{ i }}][correct]">
-                                    <input type="text" class="form-control option-text" 
-                                           name="questions[0][options][{{ i }}][text]" 
-                                           placeholder="Матни гузориш {{ i }}" required>
-                                    {% if i > "1" %}
-                                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="removeOption(this)">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addOption(this)">
-                            <i class="fas fa-plus me-1"></i> Иловаи гузориши нав
-                        </button>
-                    </div>
-                </div>
             </div>
             
-            <!-- Add Question Button -->
-            <div class="text-center mb-4">
-                <button type="button" class="btn btn-outline-primary" id="addQuestionBtn">
-                    <i class="fas fa-plus-circle me-2"></i> Иловаи саволи нав
-                </button>
-            </div>
-            
+            <!-- Navigation -->
             <div class="d-flex justify-content-between">
                 <button type="button" class="btn btn-outline-secondary" onclick="goToStep(1)">
                     <i class="fas fa-arrow-left me-2"></i> Ба қадами қаблӣ
@@ -422,155 +331,60 @@
             </div>
         </div>
         
-        <!-- Step 3: Settings -->
+        <!-- Step 3: Settings and Submit -->
         <div class="form-section" id="step3-content" style="display: none;">
             <div class="form-section-header">
                 <h4 class="fw-bold text-primary">
                     <i class="fas fa-cog me-2"></i>
-                    Танзимот
+                    Танзимот ва тасдиқ
                 </h4>
-                <p class="text-muted mb-0">Танзимоти викторинаро муқаррар кунед</p>
+                <p class="text-muted mb-0">Танзимоти ниҳоии викторинаро муқаррар кунед</p>
             </div>
             
-            <div class="row">
-                <div class="col-md-6 mb-4">
-                    <h6 class="fw-bold mb-3">Дастрасӣ</h6>
-                    
-                    <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" 
-                                   id="id_is_public" name="is_public" checked>
-                            <label class="form-check-label fw-bold" for="id_is_public">
-                                Викторинаи оммавӣ
-                            </label>
-                            <div class="form-text">Агар фаъол бошад, ҳама корбарон метавонанд викторинаро иҷро кунанд</div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3" id="accessGroups">
-                        <label class="form-label fw-bold">Гурӯҳҳои дастрасӣ</label>
-                        <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
-                            {% for group in groups %}
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" 
-                                       name="allowed_groups" value="{{ group.id }}" 
-                                       id="group{{ group.id }}">
-                                <label class="form-check-label" for="group{{ group.id }}">
-                                    {{ group.name }}
-                                    <small class="text-muted">({{ group.members.count }} аъзо)</small>
-                                </label>
-                            </div>
-                            {% empty %}
-                            <p class="text-muted mb-0">Гурӯҳ вуҷуд надорад</p>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-6 mb-4">
-                    <h6 class="fw-bold mb-3">Вақтбандӣ</h6>
-                    
-                    <div class="mb-3">
-                        <label for="id_start_time" class="form-label fw-bold">Вақти оғоз</label>
-                        <input type="datetime-local" class="form-control" 
-                               id="id_start_time" name="start_time">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="id_end_time" class="form-label fw-bold">Вақти поён</label>
-                        <input type="datetime-local" class="form-control" 
-                               id="id_end_time" name="end_time">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="id_max_attempts" class="form-label fw-bold">Маҳдудияти иҷро</label>
-                        <input type="number" class="form-control" id="id_max_attempts" 
-                               name="max_attempts" min="0" value="0">
-                        <div class="form-text">0 барои номаҳдуд. Шумораи максималии иҷрои викторина</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row">
+            <!-- Attempts and Passing -->
+            <div class="row mb-4">
                 <div class="col-md-6 mb-3">
-                    <h6 class="fw-bold mb-3">Натиҷаҳо</h6>
-                    
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" 
-                                   id="id_show_results" name="show_results" checked>
-                            <label class="form-check-label" for="id_show_results">
-                                Намоиши фаврии натиҷаҳо
-                            </label>
-                            <div class="form-text">Намоиши натиҷаҳо пас аз анҷом додани викторина</div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" 
-                                   id="id_show_correct_answers" name="show_correct_answers">
-                            <label class="form-check-label" for="id_show_correct_answers">
-                                Намоиши ҷавобҳои дуруст
-                            </label>
-                            <div class="form-text">Намоиши ҷавобҳои дуруст пас аз анҷом додани викторина</div>
-                        </div>
-                    </div>
+                    <label for="id_max_attempts" class="form-label fw-bold">Максимум кӯшишҳо *</label>
+                    <input type="number" class="form-control" id="id_max_attempts" 
+                           name="max_attempts" min="1" value="1" required>
+                    <div class="form-text">Шумораи максималии иҷрои викторина</div>
                 </div>
                 
                 <div class="col-md-6 mb-3">
-                    <h6 class="fw-bold mb-3">Тартиб</h6>
-                    
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" 
-                                   id="id_shuffle_questions" name="shuffle_questions">
-                            <label class="form-check-label" for="id_shuffle_questions">
-                                Саволҳоро ба тартиби тасодуфӣ гузоштан
-                            </label>
-                        </div>
+                    <label for="id_pass_percentage" class="form-label fw-bold">Фоизи гузариш *</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="id_pass_percentage" 
+                               name="pass_percentage" min="0" max="100" value="60" required>
+                        <span class="input-group-text">%</span>
                     </div>
-                    
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" 
-                                   id="id_shuffle_options" name="shuffle_options">
-                            <label class="form-check-label" for="id_shuffle_options">
-                                Гузоришҳоро ба тартиби тасодуфӣ гузоштан
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="id_pass_percentage" class="form-label fw-bold">Фоизи гузариш</label>
-                        <div class="input-group">
-                            <input type="number" class="form-control" id="id_pass_percentage" 
-                                   name="pass_percentage" min="0" max="100" value="60">
-                            <span class="input-group-text">%</span>
-                        </div>
-                        <div class="form-text">Миқдори минималии барои гузаштан аз викторина</div>
-                    </div>
+                    <div class="form-text">Миқдори минималии барои гузаштан аз викторина</div>
                 </div>
             </div>
             
-            <div class="d-flex justify-content-between">
-                <button type="button" class="btn btn-outline-secondary" onclick="goToStep(2)">
-                    <i class="fas fa-arrow-left me-2"></i> Ба қадами қаблӣ
-                </button>
-                <button type="button" class="btn btn-primary" onclick="goToStep(4)">
-                    Ба қадами навбатӣ <i class="fas fa-arrow-right ms-2"></i>
-                </button>
-            </div>
-        </div>
-        
-        <!-- Step 4: Review & Submit -->
-        <div class="form-section" id="step4-content" style="display: none;">
-            <div class="form-section-header">
-                <h4 class="fw-bold text-primary">
-                    <i class="fas fa-check-circle me-2"></i>
-                    Тасдиқ
-                </h4>
-                <p class="text-muted mb-0">Маълумоти викторинаро дубора баррасӣ кунед</p>
+            <!-- Status Selection -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">Статуси викторина *</label>
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="status" id="status_draft" value="draft" checked>
+                            <label class="form-check-label fw-bold" for="status_draft">
+                                <i class="fas fa-save me-2 text-secondary"></i>Нопурра
+                            </label>
+                            <div class="form-text">Викторина захира карда мешавад ва омода кардани саволҳо идома меёбад</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="status" id="status_active" value="active">
+                            <label class="form-check-label fw-bold" for="status_active">
+                                <i class="fas fa-play-circle me-2 text-success"></i>Фаъол
+                            </label>
+                            <div class="form-text">Викторина фаъол карда мешавад ва корбарон метавонанд иҷро кунанд</div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <!-- Quiz Preview -->
@@ -590,50 +404,15 @@
                 </div>
             </div>
             
-            <!-- Summary Stats -->
-            <div class="row mb-4">
-                <div class="col-md-3 mb-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h3 class="fw-bold text-primary" id="previewQuestionsCount">0</h3>
-                            <small class="text-muted">Саволҳо</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h3 class="fw-bold text-success" id="previewTotalPoints">0</h3>
-                            <small class="text-muted">Ҳамагӣ аломатҳо</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h3 class="fw-bold text-info" id="previewDuration">0</h3>
-                            <small class="text-muted">Дақиқа</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h3 class="fw-bold text-warning" id="previewDifficulty">Миёна</h3>
-                            <small class="text-muted">Мураккабӣ</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
             <!-- Final Actions -->
             <div class="alert alert-info">
                 <i class="fas fa-info-circle me-2"></i>
-                Пас аз нашр кардани викторина, шумо метавонед онро таҳрир кунед ё дар ҳама вақт пӯшед.
+                Пас аз эҷоди викторина, шумо метавонед саволҳои иловагӣ илова кунед ё онро таҳрир кунед.
             </div>
             
+            <!-- Navigation and Submit -->
             <div class="d-flex justify-content-between">
-                <button type="button" class="btn btn-outline-secondary" onclick="goToStep(3)">
+                <button type="button" class="btn btn-outline-secondary" onclick="goToStep(2)">
                     <i class="fas fa-arrow-left me-2"></i> Ба қадами қаблӣ
                 </button>
                 
@@ -654,8 +433,6 @@
 {% block extra_js %}
 <script>
 let currentStep = 1;
-let questionCount = 1;
-let selectedQuestionType = 'multiple_choice';
 
 // Navigation between steps
 function goToStep(step) {
@@ -665,7 +442,7 @@ function goToStep(step) {
     }
     
     // Hide all steps
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 3; i++) {
         $(`#step${i}-content`).hide();
         $(`#step${i}`).removeClass('active completed');
     }
@@ -681,8 +458,8 @@ function goToStep(step) {
     
     currentStep = step;
     
-    // Update preview if on step 4
-    if (step === 4) {
+    // Update preview if on step 3
+    if (step === 3) {
         updatePreview();
     }
 }
@@ -692,7 +469,10 @@ function validateStep(step) {
     switch(step) {
         case 1:
             const title = $('#id_title').val().trim();
-            const subject = $('#id_subject').val();
+            const startLevel = $('#id_start_level').val();
+            const endLevel = $('#id_end_level').val();
+            const startTime = $('#id_start_time').val();
+            const endTime = $('#id_end_time').val();
             const duration = $('#id_duration').val();
             
             if (!title) {
@@ -701,9 +481,22 @@ function validateStep(step) {
                 return false;
             }
             
-            if (!subject) {
-                alert('Лутфан фани викторинаро интихоб кунед');
-                $('#id_subject').focus();
+            if (parseInt(startLevel) > parseInt(endLevel)) {
+                alert('Сатҳи оғоз набояд аз сатҳи анҷом зиёд бошад');
+                $('#id_start_level').focus();
+                return false;
+            }
+            
+            if (!startTime || !endTime) {
+                alert('Лутфан вақтҳои оғоз ва анҷомро муайян кунед');
+                return false;
+            }
+            
+            // Validate times
+            const startDate = new Date(startTime);
+            const endDate = new Date(endTime);
+            if (startDate >= endDate) {
+                alert('Вақти анҷом бояд баъд аз вақти оғоз бошад');
                 return false;
             }
             
@@ -716,261 +509,97 @@ function validateStep(step) {
             return true;
             
         case 2:
-            const questionCount = $('.question-preview').length;
-            if (questionCount === 0) {
-                alert('Лутфан ҳадди ақал як савол илова кунед');
+            // No validation required for questions (they're optional)
+            return true;
+            
+        case 3:
+            const maxAttempts = $('#id_max_attempts').val();
+            const passPercentage = $('#id_pass_percentage').val();
+            
+            if (maxAttempts < 1) {
+                alert('Максимум кӯшишҳо бояд камаш 1 бошад');
+                $('#id_max_attempts').focus();
                 return false;
             }
             
-            // Validate each question
-            let isValid = true;
-            $('.question-preview').each(function(index) {
-                const questionText = $(this).find('.question-text').val().trim();
-                const points = $(this).find('.question-points').val();
-                
-                if (!questionText) {
-                    alert(`Савол #${index + 1}: Матни саволро ворид кунед`);
-                    $(this).find('.question-text').focus();
-                    isValid = false;
-                    return false;
-                }
-                
-                if (!points || points < 1 || points > 100) {
-                    alert(`Савол #${index + 1}: Аломатҳо бояд байни 1 то 100 бошад`);
-                    $(this).find('.question-points').focus();
-                    isValid = false;
-                    return false;
-                }
-                
-                // Validate options for multiple choice
-                if ($(this).find('.multiple-choice-options:visible').length) {
-                    const optionCount = $(this).find('.option-text').filter(function() {
-                        return $(this).val().trim().length > 0;
-                    }).length;
-                    
-                    if (optionCount < 2) {
-                        alert(`Савол #${index + 1}: Ҳадди ақал 2 гузориш илова кунед`);
-                        isValid = false;
-                        return false;
-                    }
-                    
-                    const correctCount = $(this).find('.correct-option:checked').length;
-                    if (correctCount === 0) {
-                        alert(`Савол #${index + 1}: Ҳадди ақал як ҷавоби дурустро интихоб кунед`);
-                        isValid = false;
-                        return false;
-                    }
-                }
-            });
+            if (passPercentage < 0 || passPercentage > 100) {
+                alert('Фоизи гузариш бояд байни 0 то 100 бошад');
+                $('#id_pass_percentage').focus();
+                return false;
+            }
             
-            return isValid;
-            
-        case 3:
-            // Always valid
             return true;
     }
     
     return true;
 }
 
-// Question type selection
-function selectQuestionType(type) {
-    selectedQuestionType = type;
-    
-    // Update button styles
-    $('.question-type-btn').removeClass('active');
-    $(`.question-type-btn[data-type="${type}"]`).addClass('active');
-}
-
-// Add new question
-$('#addQuestionBtn').click(function() {
-    questionCount++;
-    
-    const template = $('#questionTemplate').clone();
-    template.removeAttr('id').removeAttr('style');
-    template.find('.question-number').text(questionCount);
-    
-    // Update form names
-    template.find('[name]').each(function() {
-        const name = $(this).attr('name').replace('[0]', `[${questionCount - 1}]`);
-        $(this).attr('name', name);
-    });
-    
-    // Show remove button for non-first questions
-    if (questionCount > 1) {
-        template.find('button[onclick="removeQuestion(this)"]').prop('disabled', false);
-    }
-    
-    // Show only selected question type options
-    template.find('.question-options').hide();
-    template.find(`.${selectedQuestionType}-options`).show();
-    
-    // Update option names
-    template.find('.option-text').each(function(index) {
-        $(this).attr('name', `questions[${questionCount - 1}][options][${index}][text]`);
-    });
-    
-    template.find('.correct-option').each(function(index) {
-        $(this).attr('name', `questions[${questionCount - 1}][options][${index}][correct]`);
-    });
-    
-    $('#questionsContainer').append(template);
-    
-    // Scroll to new question
-    $('html, body').animate({
-        scrollTop: template.offset().top - 100
-    }, 500);
-});
-
-// Remove question
-function removeQuestion(button) {
-    if (confirm('Оё шумо мутмаин ҳастед, ки мехоҳед ин саволро нест кунед?')) {
-        $(button).closest('.question-preview').remove();
-        updateQuestionNumbers();
-        questionCount--;
-    }
-}
-
-// Update question numbers
-function updateQuestionNumbers() {
-    $('.question-preview').each(function(index) {
-        $(this).find('.question-number').text(index + 1);
-    });
-}
-
-// Add option to question
-function addOption(button) {
-    const questionDiv = $(button).closest('.question-preview');
-    const optionsContainer = questionDiv.find('.options-container');
-    const questionIndex = questionDiv.index();
-    const optionIndex = optionsContainer.find('.option-item').length;
-    
-    const optionItem = `
-        <div class="option-item">
-            <div class="d-flex align-items-center">
-                <input type="checkbox" class="form-check-input me-2 correct-option" 
-                       name="questions[${questionIndex}][options][${optionIndex}][correct]">
-                <input type="text" class="form-control option-text" 
-                       name="questions[${questionIndex}][options][${optionIndex}][text]" 
-                       placeholder="Матни гузориш ${optionIndex + 1}" required>
-                <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="removeOption(this)">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        </div>
-    `;
-    
-    optionsContainer.append(optionItem);
-}
-
-// Remove option
-function removeOption(button) {
-    if ($(button).closest('.options-container').find('.option-item').length > 1) {
-        $(button).closest('.option-item').remove();
-    } else {
-        alert('Ҳадди ақал як гузориш бояд бошад');
-    }
-}
-
 // Update preview
 function updatePreview() {
     const title = $('#id_title').val() || 'Викторинаи нав';
     const description = $('#id_description').val() || 'Тавсиф вуҷуд надорад';
-    const subject = $('#id_subject option:selected').text() || 'Муайян нашуда';
+    const subject = $('#id_subject option:selected').text() || 'Без фан';
+    const quizMode = $('#id_quiz_mode option:selected').text();
+    const levelType = $('#id_level_type option:selected').text();
+    const startLevel = $('#id_start_level').val();
+    const endLevel = $('#id_end_level').val();
     const duration = $('#id_duration').val() || '0';
-    const difficulty = $('#id_difficulty option:selected').text() || 'Миёна';
-    const questionsCount = $('.question-preview').length;
-    const totalPoints = Array.from($('.question-points')).reduce((sum, input) => sum + parseInt($(input).val() || 0), 0);
+    const startTime = $('#id_start_time').val() ? new Date($('#id_start_time').val()).toLocaleString() : 'Муайян нашуда';
+    const endTime = $('#id_end_time').val() ? new Date($('#id_end_time').val()).toLocaleString() : 'Муайян нашуда';
+    const maxAttempts = $('#id_max_attempts').val();
+    const passPercentage = $('#id_pass_percentage').val();
+    const status = $('input[name="status"]:checked').val();
+    const statusText = status === 'active' ? 'Фаъол' : 'Нопурра';
     
-    // Update preview stats
-    $('#previewQuestionsCount').text(questionsCount);
-    $('#previewTotalPoints').text(totalPoints);
-    $('#previewDuration').text(duration);
-    $('#previewDifficulty').text(difficulty);
-    
-    // Generate preview HTML
     const previewHtml = `
         <div class="preview-header mb-4">
             <h4 class="fw-bold">${title}</h4>
             <p class="text-muted mb-2">${description}</p>
-            <div class="d-flex align-items-center">
-                <span class="badge bg-info me-3">${subject}</span>
-                <span class="badge bg-secondary me-3">${duration} дақиқа</span>
-                <span class="badge bg-warning">${difficulty}</span>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-2">
+                        <strong>Фан:</strong> ${subject}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Реҷа:</strong> ${quizMode}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Навъи сатҳ:</strong> ${levelType}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Сатҳҳо:</strong> ${startLevel} - ${endLevel}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-2">
+                        <strong>Вақти оғоз:</strong> ${startTime}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Вақти анҷом:</strong> ${endTime}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Мӯҳлати вақт:</strong> ${duration} дақиқа
+                    </div>
+                    <div class="mb-2">
+                        <strong>Кӯшишҳо:</strong> ${maxAttempts} маротиба
+                    </div>
+                    <div class="mb-2">
+                        <strong>Фоизи гузариш:</strong> ${passPercentage}%
+                    </div>
+                </div>
             </div>
-        </div>
-        
-        <div class="preview-questions">
-            <h6 class="fw-bold mb-3">Саволҳо (${questionsCount})</h6>
-            <div class="list-group">
-                ${generateQuestionPreviews()}
+            
+            <div class="alert alert-${status === 'active' ? 'success' : 'info'} mt-3">
+                <i class="fas fa-${status === 'active' ? 'play-circle' : 'save'} me-2"></i>
+                Статус: <strong>${statusText}</strong>
             </div>
-        </div>
-        
-        <div class="alert alert-info mt-4">
-            <i class="fas fa-info-circle me-2"></i>
-            Ин викторина ${$('#id_is_public').is(':checked') ? 'оммавӣ' : 'хусусӣ'} аст ва 
-            ${$('#id_max_attempts').val() === '0' ? 'номаҳдуд' : $('#id_max_attempts').val() + ' маротиба'} 
-            иҷро карда мешавад.
         </div>
     `;
     
     $('#quizPreview').html(previewHtml);
 }
-
-// Generate question previews
-function generateQuestionPreviews() {
-    let html = '';
-    
-    $('.question-preview').each(function(index) {
-        const questionText = $(this).find('.question-text').val() || 'Савол вуҷуд надорад';
-        const points = $(this).find('.question-points').val() || '0';
-        const optionsCount = $(this).find('.option-text').filter(function() {
-            return $(this).val().trim().length > 0;
-        }).length;
-        
-        html += `
-            <div class="list-group-item">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h6 class="mb-1">Савол ${index + 1}</h6>
-                        <p class="mb-1 text-muted">${questionText.substring(0, 100)}${questionText.length > 100 ? '...' : ''}</p>
-                    </div>
-                    <span class="badge bg-primary">${points} хол</span>
-                </div>
-                <small class="text-muted">${optionsCount} гузориш</small>
-            </div>
-        `;
-    });
-    
-    return html;
-}
-
-// Form submission
-$('#quizCreateForm').submit(function(e) {
-    if (!validateStep(currentStep)) {
-        e.preventDefault();
-        return false;
-    }
-    
-    // Ensure we're on the final step
-    if (currentStep !== 4) {
-        e.preventDefault();
-        goToStep(4);
-        return false;
-    }
-    
-    // Additional validation
-    const questionsCount = $('.question-preview').length;
-    if (questionsCount === 0) {
-        e.preventDefault();
-        alert('Лутфан ҳадди ақал як савол илова кунед');
-        goToStep(2);
-        return false;
-    }
-    
-    return true;
-});
 
 // Initialize date/time inputs
 $(document).ready(function() {
@@ -985,14 +614,40 @@ $(document).ready(function() {
         return date.toISOString().slice(0, 16);
     }
     
-    // Toggle access groups based on public/private
-    $('#id_is_public').change(function() {
-        if ($(this).is(':checked')) {
-            $('#accessGroups').slideUp();
-        } else {
-            $('#accessGroups').slideDown();
+    // Auto-calculate end level if start level changes
+    $('#id_start_level').on('change', function() {
+        const startLevel = parseInt($(this).val());
+        const endLevel = parseInt($('#id_end_level').val());
+        
+        if (startLevel > endLevel) {
+            $('#id_end_level').val(startLevel);
         }
-    }).trigger('change');
+    });
+    
+    // Form submission
+    $('#quizCreateForm').submit(function(e) {
+        if (!validateStep(currentStep)) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Ensure we're on the final step
+        if (currentStep !== 3) {
+            e.preventDefault();
+            goToStep(3);
+            return false;
+        }
+        
+        // Show loading
+        $('button[type="submit"]').prop('disabled', true).html(
+            '<i class="fas fa-spinner fa-spin me-2"></i>Эҷод карда истодааст...'
+        );
+        
+        return true;
+    });
+    
+    // Initialize preview
+    updatePreview();
 });
 </script>
 {% endblock %}
