@@ -1,0 +1,330 @@
+<!-- templates/quizzes/list_simple.html -->
+{% extends "base.html" %}
+
+{% block title %}Викторинаҳо{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-5 fw-bold">
+                <i class="fas fa-question-circle me-2 text-primary"></i>
+                Викторинаҳо
+            </h1>
+            <p class="lead text-muted mb-0">
+                Ба викторинаҳои дастрас иштирок кунед ва малакаҳои худро санҷед
+            </p>
+        </div>
+        
+        {% if user.role == 'teacher' or user.role == 'admin' %}
+        <a href="{% url 'quiz_create' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus-circle me-2"></i> Викторинаи нав
+        </a>
+        {% endif %}
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-primary border-2">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Викторинаҳои дастрас</h6>
+                            <h3 class="fw-bold text-primary">{{ stats.available_quizzes|default:"0" }}</h3>
+                        </div>
+                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary p-3">
+                            <i class="fas fa-play-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card border-success border-2">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Викторинаҳои анҷомдода</h6>
+                            <h3 class="fw-bold text-success">{{ stats.completed_quizzes|default:"0" }}</h3>
+                        </div>
+                        <div class="rounded-circle bg-success bg-opacity-10 text-success p-3">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card border-info border-2">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Викторинаҳои ҷорӣ</h6>
+                            <h3 class="fw-bold text-info">{{ stats.active_attempts|default:"0" }}</h3>
+                        </div>
+                        <div class="rounded-circle bg-info bg-opacity-10 text-info p-3">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card border-warning border-2">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Миёнаи натиҷа</h6>
+                            <h3 class="fw-bold text-warning">{{ stats.average_score|default:"0" }}%</h3>
+                        </div>
+                        <div class="rounded-circle bg-warning bg-opacity-10 text-warning p-3">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter and Search -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" 
+                               placeholder="Ҷустуҷӯи викторинаҳо..." id="searchInput">
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <select class="form-select" id="filterSubject">
+                        <option value="">Ҳама фанҳо</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <select class="form-select" id="filterStatus">
+                        <option value="">Ҳама статусҳо</option>
+                        <option value="available">Дастрас</option>
+                        <option value="completed">Анҷомдода</option>
+                        <option value="active">Ҷорӣ</option>
+                        <option value="upcoming">Омадаистода</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-primary w-100" id="applyFilters">
+                        <i class="fas fa-filter me-2"></i> Филтр
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quizzes List -->
+    <div class="row" id="quizzesContainer">
+        {% for quiz in quizzes %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title fw-bold">{{ quiz.title }}</h5>
+                        <span class="badge bg-info">{{ quiz.subject_name }}</span>
+                    </div>
+                    
+                    <p class="card-text text-muted mb-3">{{ quiz.description }}</p>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ quiz.time_limit }} дақ
+                            </small>
+                        </div>
+                        <div class="col-6 text-end">
+                            <small class="text-muted">
+                                <i class="fas fa-question-circle me-1"></i>
+                                {{ quiz.question_count }} савол
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <small class="text-muted">
+                                <i class="fas fa-layer-group me-1"></i>
+                                Сатҳҳо: {{ quiz.start_level }}-{{ quiz.end_level }} ({{ quiz.level_type }})
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                {{ quiz.start_time|date:"d.m.Y H:i" }}
+                            </small>
+                        </div>
+                        <div class="col-6 text-end">
+                            <span class="badge 
+                                {% if quiz.status == 'active' %}bg-success
+                                {% elif quiz.status == 'upcoming' %}bg-warning
+                                {% else %}bg-secondary{% endif %}">
+                                {{ quiz.status|title }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i>
+                            {{ quiz.quiz_mode|title }}
+                        </small>
+                        
+                        <div class="btn-group">
+                            <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> Дидан
+                            </a>
+                            {% if user.role == 'student' and quiz.status == 'active' %}
+                            <a href="{% url 'quiz_start' quiz.id %}" class="btn btn-sm btn-success">
+                                <i class="fas fa-play"></i> Оғоз
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Викторинаҳо вуҷуд надоранд</h4>
+                    <p class="text-muted">Ҳанӯз ягон викторина эҷод нашудааст</p>
+                    {% if user.role == 'teacher' or user.role == 'admin' %}
+                    <a href="{% url 'quiz_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i> Якумро эҷод кунед
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Debug Information (only for development) -->
+    {% if debug %}
+    <div class="card mt-4">
+        <div class="card-header bg-light">
+            <h6 class="mb-0">Информация отоилкунӣ</h6>
+        </div>
+        <div class="card-body">
+            <pre>{{ debug_info }}</pre>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.card {
+    transition: all 0.3s ease;
+    border: 1px solid #dee2e6;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    border-color: #4361ee;
+}
+
+.badge {
+    font-size: 0.8em;
+}
+
+.card-title {
+    font-size: 1.1rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Search functionality
+    $('#searchInput').on('keyup', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        
+        $('.col-md-6.col-lg-4.mb-4').each(function() {
+            const quizTitle = $(this).find('.card-title').text().toLowerCase();
+            const quizDesc = $(this).find('.card-text').text().toLowerCase();
+            const subjectName = $(this).find('.badge').text().toLowerCase();
+            
+            if (quizTitle.includes(searchTerm) || quizDesc.includes(searchTerm) || subjectName.includes(searchTerm)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+    
+    // Filter by subject
+    $('#filterSubject').change(function() {
+        const subjectId = $(this).val();
+        
+        if (!subjectId) {
+            $('.col-md-6.col-lg-4.mb-4').show();
+            return;
+        }
+        
+        $('.col-md-6.col-lg-4.mb-4').each(function() {
+            const subjectText = $(this).find('.badge').text();
+            if (subjectText.includes($('#filterSubject option:selected').text())) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+    
+    // Apply filters button
+    $('#applyFilters').click(function() {
+        const statusFilter = $('#filterStatus').val();
+        
+        if (!statusFilter) {
+            $('.col-md-6.col-lg-4.mb-4').show();
+            return;
+        }
+        
+        $('.col-md-6.col-lg-4.mb-4').each(function() {
+            const statusBadge = $(this).find('.badge.bg-success, .badge.bg-warning, .badge.bg-secondary').text().toLowerCase();
+            
+            if ((statusFilter === 'available' && statusBadge.includes('active')) ||
+                (statusFilter === 'upcoming' && statusBadge.includes('upcoming')) ||
+                (statusFilter === 'completed' && statusBadge.includes('ended'))) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+    
+    // Auto-refresh every 30 seconds
+    setInterval(function() {
+        location.reload();
+    }, 30000);
+});
+</script>
+{% endblock %}
