@@ -1,0 +1,707 @@
+<!-- templates/results/quiz_results.html -->
+{% extends "base.html" %}
+
+{% block title %}Натиҷаҳои викторина - {{ quiz.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .result-card {
+        border-left: 4px solid #dee2e6;
+        transition: all 0.3s ease;
+    }
+    
+    .result-card:hover {
+        border-left-color: #4361ee;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .result-card.passed {
+        border-left-color: #28a745;
+    }
+    
+    .result-card.failed {
+        border-left-color: #dc3545;
+    }
+    
+    .avatar {
+        width: 50px;
+        height: 50px;
+        background: #4361ee;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .score-badge {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .stats-card {
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .progress {
+        height: 10px;
+        border-radius: 5px;
+    }
+    
+    .chart-container {
+        height: 300px;
+        position: relative;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-5 fw-bold">
+                <i class="fas fa-chart-bar me-2 text-primary"></i>
+                Натиҷаҳои викторина
+            </h1>
+            <p class="lead text-muted mb-0">
+                Викторина: <strong>{{ quiz.title }}</strong>
+            </p>
+        </div>
+        
+        <div class="btn-group">
+            <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Бозгашт
+            </a>
+            <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+                <i class="fas fa-print me-2"></i> Чоп
+            </button>
+        </div>
+    </div>
+    
+    <!-- Stats Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card border-primary">
+                <div class="card-body text-center">
+                    <div class="display-4 fw-bold text-primary mb-2">{{ total_participants }}</div>
+                    <h6 class="text-muted mb-0">Иштирокчиён</h6>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card border-success">
+                <div class="card-body text-center">
+                    <div class="display-4 fw-bold text-success mb-2">{{ avg_score|floatformat:1 }}</div>
+                    <h6 class="text-muted mb-0">Миёнаи натиҷа</h6>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card border-info">
+                <div class="card-body text-center">
+                    <div class="display-4 fw-bold text-info mb-2">{{ max_score }}</div>
+                    <h6 class="text-muted mb-0">Беҳтарин натиҷа</h6>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card border-warning">
+                <div class="card-body text-center">
+                    <div class="display-4 fw-bold text-warning mb-2">{{ min_score }}</div>
+                    <h6 class="text-muted mb-0">Бадии натиҷа</h6>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filters and Actions -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Ҷустуҷӯи корбар...">
+                </div>
+                
+                <div class="col-md-3">
+                    <select class="form-select" id="filterStatus">
+                        <option value="">Ҳама натиҷаҳо</option>
+                        <option value="passed">Гузашта</option>
+                        <option value="failed">Ногузашта</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <select class="form-select" id="filterSort">
+                        <option value="score_desc">Натиҷаи баланд</option>
+                        <option value="score_asc">Натиҷаи паст</option>
+                        <option value="date_desc">Охирин</option>
+                        <option value="date_asc">Кӯҳнатарин</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="d-grid">
+                        <button class="btn btn-primary" id="exportBtn">
+                            <i class="fas fa-download me-2"></i> Содир кардан
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Results Table -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>
+                Натиҷаҳои корбарон ({{ results.count }})
+            </h5>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="50">#</th>
+                            <th>Корбар</th>
+                            <th class="text-center">Натиҷа</th>
+                            <th class="text-center">Фоиз</th>
+                            <th class="text-center">Вақт</th>
+                            <th class="text-center">Кӯшиш</th>
+                            <th class="text-center">Статус</th>
+                            <th class="text-center">Амалҳо</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTable">
+                        {% for result in results %}
+                        {% with percentage=result.score_percentage|default:0 %}
+                        {% with is_passed=percentage >= quiz.pass_percentage %}
+                        <tr class="result-row {% if is_passed %}table-success{% else %}table-danger{% endif %}">
+                            <td class="fw-bold">{{ forloop.counter }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar me-3">
+                                        {{ result.user.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">{{ result.user.get_full_name|default:result.user.username }}</h6>
+                                        <small class="text-muted">{{ result.user.email|default:"Без имейл" }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <h5 class="mb-0 fw-bold">{{ result.score }}/{{ result.total_questions }}</h5>
+                                <small class="text-muted">
+                                    {{ result.correct_answers }} дуруст
+                                </small>
+                            </td>
+                            <td class="text-center">
+                                <h4 class="mb-0 fw-bold 
+                                    {% if percentage >= 80 %}text-success
+                                    {% elif percentage >= 60 %}text-warning
+                                    {% else %}text-danger{% endif %}">
+                                    {{ percentage|floatformat:1 }}%
+                                </h4>
+                                <div class="progress mt-1" style="height: 5px;">
+                                    <div class="progress-bar 
+                                        {% if percentage >= 80 %}bg-success
+                                        {% elif percentage >= 60 %}bg-warning
+                                        {% else %}bg-danger{% endif %}" 
+                                         style="width: {{ percentage }}%">
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                {% if result.time_taken %}
+                                <h6 class="mb-0">{{ result.time_taken }} дақ</h6>
+                                {% else %}
+                                <h6 class="mb-0 text-muted">Номаълум</h6>
+                                {% endif %}
+                                <small class="text-muted">
+                                    {{ result.completed_at|date:"d.m.Y H:i" }}
+                                </small>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-info bg-opacity-10 text-info border border-info">
+                                    {{ result.attempt_number|default:1 }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                {% if is_passed %}
+                                <span class="badge bg-success score-badge">
+                                    <i class="fas fa-check me-1"></i> Гузашта
+                                </span>
+                                {% else %}
+                                <span class="badge bg-danger score-badge">
+                                    <i class="fas fa-times me-1"></i> Ногузашта
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'quiz_result_detail' result.id %}" 
+                                       class="btn btn-outline-primary" title="Дидани тафсилот">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger" 
+                                            onclick="deleteResult({{ result.id }})" title="Нест кардан">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endwith %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                                <h4 class="text-muted">Натиҷаҳо вуҷуд надоранд</h4>
+                                <p class="text-muted">Ҳанӯз ягон корбар ин викторинаро анҷом надодааст</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        {% if results.has_other_pages %}
+        <div class="card-footer">
+            <nav aria-label="Пагинация">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if results.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ results.previous_page_number }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in results.paginator.page_range %}
+                    {% if results.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if results.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ results.next_page_number }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Statistics Charts -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2 text-primary"></i>
+                        Тақсимоти натиҷаҳо
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="scoreDistributionChart"></canvas>
+                    </div>
+                    
+                    <div class="row text-center mt-3">
+                        <div class="col-4">
+                            <h4 class="fw-bold text-success">{{ passed_count }}</h4>
+                            <small class="text-muted">Гузашта</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="fw-bold text-danger">{{ failed_count }}</h4>
+                            <small class="text-muted">Ногузашта</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="fw-bold text-info">{{ total_participants }}</h4>
+                            <small class="text-muted">Ҳамагӣ</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2 text-success"></i>
+                        Пешрафти миёна
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="averageScoreChart"></canvas>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <h4 class="fw-bold text-primary">{{ avg_score|floatformat:1 }}%</h4>
+                        <small class="text-muted">Миёнаи натиҷа</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Detailed Statistics -->
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        Омори корбарон
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2 d-flex justify-content-between">
+                            <span>Корбарони фаъол:</span>
+                            <span class="fw-bold">{{ total_participants }}</span>
+                        </li>
+                        <li class="mb-2 d-flex justify-content-between">
+                            <span>Миёнаи вақт:</span>
+                            <span class="fw-bold">{{ avg_time|default:"0" }} дақ</span>
+                        </li>
+                        <li class="mb-2 d-flex justify-content-between">
+                            <span>Миёнаи кӯшишҳо:</span>
+                            <span class="fw-bold">{{ avg_attempts|default:"1" }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-trophy me-2"></i>
+                        Қаҳрамонон
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if top_results %}
+                    <ol class="mb-0 ps-3">
+                        {% for result in top_results|slice:":3" %}
+                        <li class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>{{ result.user.username }}</span>
+                                <span class="badge bg-success">{{ result.score_percentage|floatformat:1 }}%</span>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ol>
+                    {% else %}
+                    <p class="text-muted mb-0 text-center">Маълумот нест</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-calendar me-2"></i>
+                        Фаъолияти охирин
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if recent_results %}
+                    <div class="list-group list-group-flush">
+                        {% for result in recent_results|slice:":3" %}
+                        <div class="list-group-item px-0 border-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small>{{ result.user.username }}</small>
+                                    <div class="text-muted small">{{ result.completed_at|timesince }} пеш</div>
+                                </div>
+                                <span class="badge 
+                                    {% if result.score_percentage >= 80 %}bg-success
+                                    {% elif result.score_percentage >= 60 %}bg-warning
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ result.score_percentage|floatformat:0 }}%
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0 text-center">Маълумот нест</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Export Section -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="fas fa-file-export me-2 text-primary"></i>
+                Содир кардани натиҷаҳо
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="d-grid">
+                        <a href="{% url 'export_quiz_results' quiz.id %}?format=csv" 
+                           class="btn btn-outline-primary">
+                            <i class="fas fa-file-csv me-2"></i> CSV файл
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="d-grid">
+                        <a href="{% url 'export_quiz_results' quiz.id %}?format=excel" 
+                           class="btn btn-outline-success">
+                            <i class="fas fa-file-excel me-2"></i> Excel файл
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="d-grid">
+                        <a href="{% url 'export_quiz_results' quiz.id %}?format=pdf" 
+                           class="btn btn-outline-danger">
+                            <i class="fas fa-file-pdf me-2"></i> PDF файл
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Result Modal -->
+<div class="modal fade" id="deleteResultModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Нест кардани натиҷа</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Оё шумо мутмаин ҳастед, ки мехоҳед ин натиҷаро нест кунед?</p>
+                <p class="text-danger"><strong>Ин амал бозгашт надорад!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Бекор кардан</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Нест кардан</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+$(document).ready(function() {
+    let resultIdToDelete = null;
+    
+    // Search functionality
+    $('#searchInput').on('keyup', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        
+        $('.result-row').each(function() {
+            const userName = $(this).find('h6').text().toLowerCase();
+            const userEmail = $(this).find('small').text().toLowerCase();
+            
+            if (userName.includes(searchTerm) || userEmail.includes(searchTerm)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+    
+    // Filter by status
+    $('#filterStatus').change(function() {
+        const status = $(this).val();
+        
+        $('.result-row').each(function() {
+            if (!status) {
+                $(this).show();
+                return;
+            }
+            
+            const isPassed = $(this).hasClass('table-success');
+            if ((status === 'passed' && isPassed) || (status === 'failed' && !isPassed)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+    
+    // Sort results
+    $('#filterSort').change(function() {
+        const sortBy = $(this).val();
+        const rows = $('.result-row').get();
+        
+        rows.sort(function(a, b) {
+            const aScore = parseFloat($(a).find('h4').text().replace('%', ''));
+            const bScore = parseFloat($(b).find('h4').text().replace('%', ''));
+            const aDate = new Date($(a).find('small').last().text());
+            const bDate = new Date($(b).find('small').last().text());
+            
+            switch(sortBy) {
+                case 'score_desc':
+                    return bScore - aScore;
+                case 'score_asc':
+                    return aScore - bScore;
+                case 'date_desc':
+                    return bDate - aDate;
+                case 'date_asc':
+                    return aDate - bDate;
+                default:
+                    return 0;
+            }
+        });
+        
+        $.each(rows, function(index, row) {
+            $('#resultsTable').append(row);
+        });
+    });
+    
+    // Delete result
+    window.deleteResult = function(id) {
+        resultIdToDelete = id;
+        $('#deleteResultModal').modal('show');
+    };
+    
+    $('#confirmDelete').click(function() {
+        if (resultIdToDelete) {
+            $.ajax({
+                url: "{% url 'delete_result' %}",
+                type: 'POST',
+                data: {
+                    'result_id': resultIdToDelete,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert('Хатогӣ дар нест кардани натиҷа');
+                    }
+                },
+                error: function() {
+                    alert('Хатогии сервер');
+                }
+            });
+        }
+        $('#deleteResultModal').modal('hide');
+    });
+    
+    // Export functionality
+    $('#exportBtn').click(function() {
+        const format = prompt('Формати содиротро интихоб кунед (csv, excel, pdf):', 'csv');
+        if (format) {
+            window.location.href = "{% url 'export_quiz_results' quiz.id %}?format=" + format;
+        }
+    });
+    
+    // Initialize charts
+    initializeCharts();
+    
+    function initializeCharts() {
+        // Score Distribution Chart
+        const distributionCtx = document.getElementById('scoreDistributionChart').getContext('2d');
+        new Chart(distributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Гузашта', 'Ногузашта'],
+                datasets: [{
+                    data: [{{ passed_count|default:0 }}, {{ failed_count|default:0 }}],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.8)',
+                        'rgba(220, 53, 69, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        
+        // Average Score Chart (simplified bar chart)
+        const averageCtx = document.getElementById('averageScoreChart').getContext('2d');
+        new Chart(averageCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Миёнаи натиҷа'],
+                datasets: [{
+                    label: 'Фоиз',
+                    data: [{{ avg_score|default:0 }}],
+                    backgroundColor: 'rgba(67, 97, 238, 0.8)',
+                    borderColor: 'rgba(67, 97, 238, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

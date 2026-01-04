@@ -29,7 +29,7 @@ urlpatterns = [
     path('quizzes/<int:pk>/edit/', views.quiz_edit_view, name='quiz_edit'),
     path('quizzes/<int:pk>/start/', views.quiz_start_view, name='quiz_start'),
     path('quizzes/<int:quiz_pk>/results/', views.quiz_results_view, name='quiz_results'),
-
+    path('quizzes/create/', views.quiz_create_view, name='quiz_create'),
     path('quiz-sessions/<int:session_pk>/take/', views.quiz_take_view, name='quiz_take'),
     path('quiz-sessions/<int:session_pk>/finish/', views.quiz_finish_view, name='quiz_finish'),
     path('quiz-sessions/<int:session_pk>/result/', views.quiz_result_view, name='quiz_result'),

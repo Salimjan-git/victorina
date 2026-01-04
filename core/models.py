@@ -211,18 +211,23 @@ class Quiz(models.Model):
         return self.status == 'active' and self.start_time <= now <= self.end_time
 
 
+# models.py - дар Question model
 class Question(models.Model):
     QUESTION_TYPE_CHOICES = (
         ('single_choice', 'Як интихоб'),
         ('multiple_choice', 'Чанд интихоб'),
         ('true_false', 'Дурст/Нодуруст'),
+        ('short_answer', 'Ҷавоби кӯтоҳ'),
     )
     
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='questions')
-    text = models.TextField()
-    question_type = models.CharField(max_length=20, choices=QUESTION_TYPE_CHOICES)
-    points = models.IntegerField(default=1)
-    order = models.IntegerField(default=0)
+    text = models.TextField(verbose_name="Матни савол")
+    question_type = models.CharField(max_length=20, choices=QUESTION_TYPE_CHOICES, default='single_choice')
+    points = models.IntegerField(default=1, verbose_name="Ҳаққҳо")
+    order = models.IntegerField(default=0, verbose_name="Тартиб")
+    hint = models.TextField(blank=True, null=True, verbose_name="Ишора")
+    explanation = models.TextField(blank=True, null=True, verbose_name="Шарҳ")
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         verbose_name = 'Савол'
@@ -234,6 +239,12 @@ class Question(models.Model):
     
     def get_correct_answers(self):
         return self.answers.filter(is_correct=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.order and self.quiz:
+            last_question = Question.objects.filter(quiz=self.quiz).order_by('-order').first()
+            self.order = (last_question.order + 1) if last_question else 1
+        super().save(*args, **kwargs)
 
 
 class Answer(models.Model):

@@ -565,59 +565,220 @@ def filter_ended(quizzes):
 
 @user_passes_test(is_teacher)
 def quiz_create_view(request):
-    if request.method == 'POST':
-        form_data = request.POST.copy()
+    """View for creating a new quiz - UPDATED FOR QUIZ MODEL"""
+    try:
+        print("=== DEBUG: quiz_create_view called ===")
         
-        # Преобразуем даты для формы
-        try:
-            if 'start_time' in form_data and form_data['start_time']:
-                form_data['start_time'] = timezone.make_aware(parse_datetime(form_data['start_time']))
-            if 'end_time' in form_data and form_data['end_time']:
-                form_data['end_time'] = timezone.make_aware(parse_datetime(form_data['end_time']))
-        except Exception as e:
-            messages.error(request, f'Хатогӣ дар формати дата: {str(e)}')
-            subjects = Subject.objects.all()
-            context = {'subjects': subjects}
-            return render(request, 'quizzes/simple_create.html', context)
+        # Get subjects for dropdown
+        subjects = Subject.objects.all()
         
-        form = QuizForm(form_data)
-        
-        if form.is_valid():
-            quiz = form.save(commit=False)
-            quiz.created_by = request.user
+        if request.method == 'POST':
+            print("=== DEBUG: POST Data ===")
+            for key, value in request.POST.items():
+                print(f"{key}: {value}")
             
-            # Дополнительная валидация
-            if quiz.start_time >= quiz.end_time:
-                messages.error(request, 'Вақти анҷом бояд пеш аз вақти оғоз бошад!')
-                subjects = Subject.objects.all()
-                context = {'subjects': subjects, 'form': form}
-                return render(request, 'quizzes/simple_create.html', context)
+            # Get form data
+            title = request.POST.get('title', '').strip()
+            subject_id = request.POST.get('subject', '')
+            description = request.POST.get('description', '').strip()
+            quiz_mode = request.POST.get('quiz_mode', 'individual')
+            level_type = request.POST.get('level_type', 'school')
+            start_level = request.POST.get('start_level', '1')
+            end_level = request.POST.get('end_level', '10')
+            time_limit = request.POST.get('duration', '30')  # Note: field name is 'duration' in form
+            max_attempts = request.POST.get('max_attempts', '1')
+            pass_percentage = request.POST.get('pass_percentage', '60')
             
-            if quiz.start_level > quiz.end_level:
-                messages.error(request, 'Сатҳи оғоз набояд аз сатҳи анҷом зиёд бошад!')
-                subjects = Subject.objects.all()
-                context = {'subjects': subjects, 'form': form}
-                return render(request, 'quizzes/simple_create.html', context)
+            # Get time values
+            start_time_str = request.POST.get('start_time', '')
+            end_time_str = request.POST.get('end_time', '')
             
-            quiz.save()
+            # Basic validation
+            if not title:
+                messages.error(request, 'Унвони викторинаро ворид кунед.')
+                return render(request, 'quizzes/create.html', {
+                    'subjects': subjects,
+                    'error': 'Унвони викторинаро ворид кунед.'
+                })
             
-            messages.success(request, f'Викторина "{quiz.title}" бомуваффақият эҷод шуд.')
+            # Parse subject - now optional
+            subject = None
+            if subject_id:
+                try:
+                    subject = Subject.objects.get(id=subject_id)
+                except Subject.DoesNotExist:
+                    messages.warning(request, 'Фан ёфт нашуд. Викторина бе фан эҷод карда мешавад.')
+            
+            # Parse datetime
+            start_time = timezone.now()
+            end_time = start_time + datetime.timedelta(days=7)
+            
+            if start_time_str:
+                try:
+                    start_time = timezone.make_aware(
+                        datetime.datetime.strptime(start_time_str, '%Y-%m-%dT%H:%M')
+                    )
+                except Exception as e:
+                    print(f"Error parsing start_time: {str(e)}")
+                    messages.warning(request, 'Формати вақти оғоз нодуруст аст. Вақти ҷорӣ истифода мешавад.')
+            
+            if end_time_str:
+                try:
+                    end_time = timezone.make_aware(
+                        datetime.datetime.strptime(end_time_str, '%Y-%m-%dT%H:%M')
+                    )
+                except Exception as e:
+                    print(f"Error parsing end_time: {str(e)}")
+                    end_time = start_time + datetime.timedelta(days=7)
+                    messages.warning(request, 'Формати вақти анҷом нодуруст аст. Вақти пешфарз истифода мешавад.')
+            
+            # Validate levels
+            try:
+                start_level_int = int(start_level)
+                end_level_int = int(end_level)
+                
+                if start_level_int > end_level_int:
+                    messages.error(request, 'Сатҳи оғоз набояд аз сатҳи анҷом зиёд бошад.')
+                    return render(request, 'quizzes/create.html', {
+                        'subjects': subjects,
+                        'error': 'Сатҳи оғоз набояд аз сатҳи анҷом зиёд бошад.'
+                    })
+            except ValueError:
+                messages.error(request, 'Сатҳҳо бояд адад бошанд.')
+                return render(request, 'quizzes/create.html', {
+                    'subjects': subjects,
+                    'error': 'Сатҳҳо бояд адад бошанд.'
+                })
+            
+            # Validate times
+            if start_time >= end_time:
+                messages.error(request, 'Вақти анҷом бояд баъд аз вақти оғоз бошад.')
+                return render(request, 'quizzes/create.html', {
+                    'subjects': subjects,
+                    'error': 'Вақти анҷом бояд баъд аз вақти оғоз бошад.'
+                })
+            
+            # Create quiz
+            quiz = Quiz.objects.create(
+                title=title,
+                subject=subject,  # Can be None
+                description=description,
+                quiz_mode=quiz_mode,
+                level_type=level_type,
+                start_level=start_level_int,
+                end_level=end_level_int,
+                start_time=start_time,
+                end_time=end_time,
+                time_limit=int(time_limit),
+                max_attempts=int(max_attempts),
+                pass_percentage=int(pass_percentage),
+                is_online=True,  # Default to online
+                status='draft',  # Default to draft
+                created_by=request.user
+            )
+            
+            print(f"=== DEBUG: Quiz created: {quiz.id} ===")
+            
+            # Check if we should publish or save as draft
+            if 'publish' in request.POST:
+                quiz.status = 'active'
+                quiz.save()
+                messages.success(request, f'Викторина "{title}" бомуваффақият эҷод ва нашр шуд!')
+            else:
+                messages.success(request, f'Викторина "{title}" бомуваффақият дар ҳолати нопурра захира шуд!')
+            
+            # Process questions if provided in form
+            process_questions_from_form(request, quiz)
+            
             return redirect('quiz_detail', pk=quiz.pk)
-        else:
-            # Если форма невалидна, покажем ошибки
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f'{field}: {error}')
-    else:
-        form = QuizForm()
+        
+        # GET request - show form
+        print("=== DEBUG: GET request - showing form ===")
+        return render(request, 'quizzes/create.html', {
+            'subjects': subjects,
+            'title': 'Эҷоди викторинаи нав'
+        })
+        
+    except Exception as e:
+        print(f"=== DEBUG: ERROR: {str(e)} ===")
+        import traceback
+        traceback.print_exc()
+        messages.error(request, f'Хатогӣ дар эҷоди викторина: {str(e)}')
+        return render(request, 'quizzes/create.html', {
+            'subjects': Subject.objects.all(),
+            'error': str(e)
+        })
+
+
+def process_questions_from_form(request, quiz):
+    """Process questions from the complex form format"""
+    try:
+        question_count = 0
+        i = 0
+        
+        while True:
+            # Check for question in different formats
+            question_text = request.POST.get(f'questions[{i}][text]', '').strip()
+            if not question_text:
+                # Try alternative format
+                question_text = request.POST.get(f'question_text_{i}', '').strip()
+            
+            if not question_text:
+                break
+            
+            question_points = request.POST.get(f'questions[{i}][points]', '10')
+            if not question_points:
+                question_points = request.POST.get(f'question_points_{i}', '10')
+            
+            # Create question
+            question = Question.objects.create(
+                quiz=quiz,
+                text=question_text,
+                question_type='single_choice',  # Default
+                points=int(question_points),
+                order=i+1
+            )
+            
+            # Process answers for this question
+            j = 0
+            while True:
+                # Try different answer formats
+                answer_text = request.POST.get(f'questions[{i}][options][{j}][text]', '').strip()
+                if not answer_text:
+                    answer_text = request.POST.get(f'answer_text_{i}_{j}', '').strip()
+                
+                if not answer_text:
+                    break
+                
+                # Check if answer is correct
+                is_correct = False
+                correct_key = f'questions[{i}][options][{j}][correct]'
+                if correct_key in request.POST:
+                    is_correct = request.POST.get(correct_key) == 'on'
+                else:
+                    # Try alternative format
+                    correct_key = f'correct_{i}_{j}'
+                    if correct_key in request.POST:
+                        is_correct = request.POST.get(correct_key) == 'on'
+                
+                Answer.objects.create(
+                    question=question,
+                    text=answer_text,
+                    is_correct=is_correct,
+                    order=j+1
+                )
+                j += 1
+            
+            question_count += 1
+            i += 1
+        
+        print(f"=== DEBUG: Processed {question_count} questions ===")
+        return question_count
+        
+    except Exception as e:
+        print(f"=== DEBUG: Error processing questions: {str(e)} ===")
+        return 0
     
-    subjects = Subject.objects.all()
-    context = {
-        'form': form,
-        'subjects': subjects,
-    }
-    
-    return render(request, 'quizzes/simple_create.html', context)
 
 @login_required
 def quiz_detail_view(request, pk):
@@ -1009,6 +1170,7 @@ def my_results_view(request):
 
 @user_passes_test(is_teacher)
 def quiz_results_view(request, quiz_pk):
+    """View for displaying quiz results"""
     try:
         quiz = get_object_or_404(Quiz, pk=quiz_pk)
         
@@ -1016,20 +1178,85 @@ def quiz_results_view(request, quiz_pk):
             messages.error(request, 'Шумо иҷозати дидани натиҷаҳои ин викторинаро надоред.')
             return redirect('quiz_list')
         
+        # Get all results for this quiz
         results = Result.objects.filter(quiz=quiz).order_by('-score')
         
+        # Calculate statistics
         total_participants = results.count()
-        avg_score = results.aggregate(avg=Avg('score'))['avg'] or 0
-        max_score = results.aggregate(max=Max('score'))['max'] or 0
-        min_score = results.aggregate(min=Min('score'))['min'] or 0
+        
+        if total_participants > 0:
+            avg_score = results.aggregate(avg=Avg('score'))['avg'] or 0
+            max_score = results.aggregate(max=Max('score'))['max'] or 0
+            min_score = results.aggregate(min=Min('score'))['min'] or 0
+            
+            # Calculate average score percentage
+            total_questions = quiz.questions.count()
+            avg_percentage = (avg_score / total_questions * 100) if total_questions > 0 else 0
+            
+            # Calculate passed/failed counts
+            passed_count = 0
+            for result in results:
+                result_percentage = (result.score / total_questions * 100) if total_questions > 0 else 0
+                if result_percentage >= quiz.pass_percentage:
+                    passed_count += 1
+            failed_count = total_participants - passed_count
+            
+            # Get top results (limit to 5)
+            top_results = results[:5]
+            
+            # Get recent results
+            recent_results = results.order_by('-completed_at')[:5]
+            
+            # Calculate average time (if available)
+            try:
+                avg_time = results.aggregate(avg=Avg('time_taken'))['avg'] or 0
+            except:
+                avg_time = 0
+                
+            # Calculate average attempts
+            try:
+                avg_attempts = results.aggregate(avg=Avg('attempt_number'))['avg'] or 1
+            except:
+                avg_attempts = 1
+            
+            # Add percentage to each result for template
+            for result in results:
+                result.score_percentage = (result.score / total_questions * 100) if total_questions > 0 else 0
+        else:
+            avg_score = 0
+            max_score = 0
+            min_score = 0
+            avg_percentage = 0
+            passed_count = 0
+            failed_count = 0
+            top_results = []
+            recent_results = []
+            avg_time = 0
+            avg_attempts = 1
+        
+        # Pagination
+        page = request.GET.get('page', 1)
+        paginator = Paginator(results, 20)  # 20 results per page
+        try:
+            results_page = paginator.page(page)
+        except PageNotAnInteger:
+            results_page = paginator.page(1)
+        except EmptyPage:
+            results_page = paginator.page(paginator.num_pages)
         
         context = {
             'quiz': quiz,
-            'results': results,
+            'results': results_page,
             'total_participants': total_participants,
-            'avg_score': avg_score,
+            'avg_score': avg_percentage,
             'max_score': max_score,
             'min_score': min_score,
+            'passed_count': passed_count,
+            'failed_count': failed_count,
+            'top_results': top_results,
+            'recent_results': recent_results,
+            'avg_time': avg_time,
+            'avg_attempts': avg_attempts,
         }
         
         return render(request, 'results/quiz_results.html', context)
@@ -1037,7 +1264,6 @@ def quiz_results_view(request, quiz_pk):
     except Exception as e:
         messages.error(request, f'Хатогӣ дар намоиши натиҷаҳои викторина: {str(e)}')
         return redirect('quiz_list')
-
 
 @login_required
 def check_quiz_time_view(request, pk):
@@ -1102,6 +1328,7 @@ def save_answer_ajax_view(request):
 
 @user_passes_test(is_teacher)
 def question_create_view(request, quiz_pk):
+    """View for creating a question - SIMPLE WORKING VERSION"""
     try:
         quiz = get_object_or_404(Quiz, pk=quiz_pk)
         
@@ -1110,33 +1337,130 @@ def question_create_view(request, quiz_pk):
             return redirect('quiz_detail', pk=quiz_pk)
         
         if request.method == 'POST':
-            form = QuestionForm(request.POST)
-            if form.is_valid():
-                question = form.save(commit=False)
-                question.quiz = quiz
+            print("=== DEBUG: POST Data ===")
+            for key, value in request.POST.items():
+                print(f"{key}: {value}")
+            
+            # Get basic question data
+            text = request.POST.get('text', '').strip()
+            question_type = request.POST.get('question_type', 'single_choice')
+            points = request.POST.get('points', '1')
+            hint = request.POST.get('hint', '').strip()
+            explanation = request.POST.get('explanation', '').strip()
+            
+            # Basic validation
+            if not text:
+                messages.error(request, 'Матни саволро ворид кунед.')
+                return render(request, 'questions/create.html', {
+                    'quiz': quiz,
+                    'error': 'Матни саволро ворид кунед.'
+                })
+            
+            try:
+                # Create question
+                question = Question.objects.create(
+                    quiz=quiz,
+                    text=text,
+                    question_type=question_type,
+                    points=int(points),
+                    hint=hint if hint else None,
+                    explanation=explanation if explanation else None
+                )
+                print(f"=== DEBUG: Question created with ID {question.id} ===")
                 
-                if not question.order:
-                    last_question = quiz.questions.order_by('-order').first()
-                    question.order = (last_question.order + 1) if last_question else 1
+                # Process answers - look for answer_text_1, answer_text_2, etc.
+                answers_data = []
+                i = 1
+                while True:
+                    answer_text = request.POST.get(f'answer_text_{i}', '').strip()
+                    if not answer_text:
+                        # Also check for answer_text[i] format
+                        answer_text = request.POST.get(f'answer_text[{i}]', '').strip()
+                    
+                    if not answer_text:
+                        break
+                    
+                    is_correct = request.POST.get(f'correct_{i}', 'off') == 'on'
+                    # Also check for correct[i] format
+                    if not is_correct:
+                        is_correct = request.POST.get(f'correct[{i}]', 'off') == 'on'
+                    
+                    answers_data.append({
+                        'text': answer_text,
+                        'is_correct': is_correct,
+                        'order': i
+                    })
+                    i += 1
                 
-                question.save()
-                messages.success(request, 'Савол бомуваффақият илова шуд.')
-                return redirect('quiz_detail', pk=quiz_pk)
+                print(f"=== DEBUG: Found {len(answers_data)} answers ===")
+                
+                # If no answers found in numbered format, try alternative approach
+                if not answers_data:
+                    # Look for answers in other formats
+                    for key, value in request.POST.items():
+                        if 'answer' in key.lower() and key != 'answers':
+                            print(f"Found alternative answer key: {key} = {value}")
+                
+                # Create answers
+                correct_count = 0
+                for answer_data in answers_data:
+                    Answer.objects.create(
+                        question=question,
+                        text=answer_data['text'],
+                        is_correct=answer_data['is_correct'],
+                        order=answer_data['order']
+                    )
+                    if answer_data['is_correct']:
+                        correct_count += 1
+                
+                # Validate at least one correct answer
+                if correct_count == 0:
+                    # Try to auto-select first answer as correct if none selected
+                    if answers_data:
+                        first_answer = Answer.objects.filter(question=question).first()
+                        if first_answer:
+                            first_answer.is_correct = True
+                            first_answer.save()
+                            correct_count = 1
+                            messages.warning(request, 'Аввалин ҷавоб ба суръати дуруст таъин карда шуд.')
+                
+                if correct_count == 0:
+                    question.delete()
+                    messages.error(request, 'Ҳадди ақал як ҷавоби дурустро интихоб кунед.')
+                    return render(request, 'questions/create.html', {
+                        'quiz': quiz,
+                        'error': 'Ҳадди ақал як ҷавоби дурустро интихоб кунед.'
+                    })
+                
+                messages.success(request, f'Савол "{text[:50]}{"..." if len(text) > 50 else ""}" бомуваффақият илова шуд!')
+                
+                # Redirect based on button pressed
+                if 'save_and_add' in request.POST:
+                    return redirect('question_create', quiz_pk=quiz.pk)
+                else:
+                    return redirect('quiz_detail', pk=quiz.pk)
+                    
+            except Exception as e:
+                print(f"=== DEBUG: Error creating question/answers: {str(e)} ===")
+                messages.error(request, f'Хатогӣ дар эҷоди савол: {str(e)}')
+                return render(request, 'questions/create.html', {
+                    'quiz': quiz,
+                    'error': str(e)
+                })
+        
         else:
-            form = QuestionForm(initial={'quiz': quiz})
-        
-        context = {
-            'form': form,
-            'quiz': quiz,
-            'title': 'Иловаи саволи нав',
-        }
-        
-        return render(request, 'questions/create.html', context)
+            # GET request - show empty form
+            print(f"=== DEBUG: GET request for quiz {quiz_pk} ===")
+            return render(request, 'questions/create.html', {
+                'quiz': quiz
+            })
         
     except Exception as e:
+        print(f"=== DEBUG: Error in question_create_view: {str(e)} ===")
+        import traceback
+        traceback.print_exc()
         messages.error(request, f'Хатогӣ дар эҷоди савол: {str(e)}')
         return redirect('quiz_detail', pk=quiz_pk)
-
 
 @user_passes_test(is_teacher)
 def question_edit_view(request, pk):
@@ -1197,3 +1521,47 @@ class AnswerInlineFormSet(forms.BaseInlineFormSet):
         
         if correct_answers == 0:
             raise forms.ValidationError("Ҳадди ақал як ҷавоби дуруст лозим аст.")
+        
+        
+        
+def debug_quiz_create(request):
+    """Debug view to test quiz creation"""
+    if request.method == 'POST':
+        print("=== DEBUG POST ===")
+        print(f"User: {request.user}")
+        print(f"POST data: {dict(request.POST)}")
+        
+        try:
+            # Try to create minimal quiz
+            from django.utils import timezone
+            import datetime
+            
+            quiz = Quiz.objects.create(
+                title=request.POST.get('title', 'Test Quiz'),
+                subject=None,  # No subject
+                quiz_mode='individual',
+                level_type='school',
+                start_level=1,
+                end_level=10,
+                start_time=timezone.now(),
+                end_time=timezone.now() + datetime.timedelta(days=7),
+                time_limit=30,
+                max_attempts=1,
+                pass_percentage=60,
+                created_by=request.user,
+                status='draft'
+            )
+            
+            return HttpResponse(f"SUCCESS! Quiz created with ID: {quiz.id}")
+            
+        except Exception as e:
+            import traceback
+            error_msg = f"ERROR: {str(e)}\n\n{traceback.format_exc()}"
+            return HttpResponse(error_msg)
+    
+    return HttpResponse("""
+    <form method="post">
+        <input type="text" name="title" value="Test Quiz">
+        <button type="submit">Test Create</button>
+    </form>
+    """)

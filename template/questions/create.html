@@ -1,0 +1,467 @@
+<!-- templates/questions/create.html -->
+{% extends "base.html" %}
+
+{% block title %}Саволи нав - {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-5 fw-bold">
+                <i class="fas fa-plus-circle me-2 text-primary"></i>
+                Саволи нав
+            </h1>
+            <p class="lead text-muted mb-0">
+                Барои викторина: <strong>{{ quiz.title }}</strong>
+            </p>
+        </div>
+        
+        <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Бозгашт ба викторина
+        </a>
+    </div>
+    
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="post" id="questionForm" action="{% url 'question_create' quiz.id %}">
+                        {% csrf_token %}
+                        
+                        <!-- Question Text -->
+                        <div class="mb-4">
+                            <label for="id_text" class="form-label fw-bold">
+                                <i class="fas fa-question me-2 text-primary"></i>
+                                Матни савол *
+                            </label>
+                            <textarea name="text" id="id_text" 
+                                    class="form-control" rows="4" 
+                                    placeholder="Матни саволро ворид кунед..."
+                                    required>{% if form.text.value %}{{ form.text.value }}{% endif %}</textarea>
+                            {% if form.text.errors %}
+                            <div class="alert alert-danger mt-2">
+                                {{ form.text.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <!-- Question Type -->
+                            <div class="col-md-6 mb-3">
+                                <label for="id_question_type" class="form-label fw-bold">
+                                    <i class="fas fa-list-alt me-1"></i> Навъи савол
+                                </label>
+                                <select name="question_type" id="id_question_type" class="form-select">
+                                    <option value="single_choice" selected>Як интихоб</option>
+                                    <option value="multiple_choice">Чанд интихоб</option>
+                                    <option value="true_false">Дуруст/Нодуруст</option>
+                                    <option value="short_answer">Ҷавоби кӯтоҳ</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Points -->
+                            <div class="col-md-6 mb-3">
+                                <label for="id_points" class="form-label fw-bold">
+                                    <i class="fas fa-star me-1"></i> Ҳаққҳо
+                                </label>
+                                <input type="number" name="points" id="id_points" 
+                                       class="form-control" 
+                                       value="{% if form.points.value %}{{ form.points.value }}{% else %}10{% endif %}" 
+                                       min="1" max="100" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Hint and Explanation -->
+                        <div class="mb-4">
+                            <h5 class="fw-bold mb-3">
+                                <i class="fas fa-lightbulb me-2 text-warning"></i>
+                                Ишора ва шарҳ
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label for="id_hint" class="form-label">
+                                    <i class="fas fa-lightbulb me-1 text-warning"></i> Ишора
+                                </label>
+                                <textarea name="hint" id="id_hint" 
+                                        class="form-control" rows="2"
+                                        placeholder="Ишора барои ҷавоб...">{% if form.hint.value %}{{ form.hint.value }}{% endif %}</textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_explanation" class="form-label">
+                                    <i class="fas fa-info-circle me-1 text-info"></i> Шарҳ
+                                </label>
+                                <textarea name="explanation" id="id_explanation" 
+                                        class="form-control" rows="2"
+                                        placeholder="Шарҳ барои ҷавоби дуруст...">{% if form.explanation.value %}{{ form.explanation.value }}{% endif %}</textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Answers Section -->
+                        <div class="mb-4">
+                            <h5 class="fw-bold mb-3">
+                                <i class="fas fa-list-check me-2 text-success"></i>
+                                Ҷавобҳо
+                            </h5>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Ҳадди ақал 2 ҷавоб илова кунед ва ҳадди ақал як ҷавоби дурустро интихоб кунед.
+                            </div>
+                            
+                            <div id="answersContainer">
+                                <!-- Initial answers will be added by JavaScript -->
+                            </div>
+                            
+                            <div class="text-center mb-3">
+                                <button type="button" id="addAnswerBtn" class="btn btn-outline-primary">
+                                    <i class="fas fa-plus-circle me-2"></i> Иловаи ҷавоби дигар
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i> Бекор кардан
+                            </a>
+                            
+                            <div class="btn-group">
+                                <button type="submit" name="save_and_add" class="btn btn-primary" id="saveAndAddBtn">
+                                    <i class="fas fa-save me-2"></i> Захира кардан ва иловаи нав
+                                </button>
+                                <button type="submit" name="save_and_return" class="btn btn-success" id="saveAndReturnBtn">
+                                    <i class="fas fa-check me-2"></i> Захира кардан
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Help Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-life-ring me-2 text-primary"></i>
+                        Дастурҳо
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="fw-bold">
+                            <i class="fas fa-check-circle me-2 text-success"></i>
+                            Саволҳои дуруст:
+                        </h6>
+                        <ul class="list-unstyled small text-muted">
+                            <li class="mb-1">
+                                <i class="fas fa-circle small me-1"></i>
+                                Савол бояд маълумот ва равшан бошад
+                            </li>
+                            <li class="mb-1">
+                                <i class="fas fa-circle small me-1"></i>
+                                Ҳадди ақал 2 ҷавоб дошта бошад
+                            </li>
+                            <li class="mb-1">
+                                <i class="fas fa-circle small me-1"></i>
+                                Ҳадди ақал 1 ҷавоби дуруст дошта бошад
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="fw-bold">
+                            <i class="fas fa-star me-2 text-warning"></i>
+                            Ҳаққҳо:
+                        </h6>
+                        <ul class="list-unstyled small text-muted">
+                            <li class="mb-1">
+                                <i class="fas fa-circle small me-1"></i>
+                                1-5 ҳаққ - саволи оддӣ
+                            </li>
+                            <li class="mb-1">
+                                <i class="fas fa-circle small me-1"></i>
+                                6-10 ҳаққ - саволи миёна
+                            </li>
+                            <li class="mb-1">
+                                <i class="fas fa-circle small me-1"></i>
+                                11-20 ҳаққ - саволи душвор
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quiz Info -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2 text-info"></i>
+                        Дар бораи викторина
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="fw-bold">{{ quiz.title }}</h6>
+                    <p class="text-muted small mb-2">{{ quiz.description|truncatewords:20 }}</p>
+                    
+                    <div class="row small">
+                        <div class="col-6">
+                            <div class="text-muted">Саволҳо:</div>
+                            <div class="fw-bold">{{ quiz.questions.count }}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted">Вақт:</div>
+                            <div class="fw-bold">{{ quiz.time_limit }} дақ</div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-2">
+                    
+                    <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="fas fa-eye me-2"></i> Дидани викторина
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.answer-card {
+    border-left: 4px solid #dee2e6;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+}
+
+.answer-card:hover {
+    border-left-color: #4361ee;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.answer-card.correct {
+    border-left-color: #198754;
+}
+
+.answer-number {
+    width: 30px;
+    height: 30px;
+    background: #4361ee;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.correct-badge {
+    background-color: #198754;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    let answerCounter = 0;
+    
+    // Initialize with 2 answers
+    for (let i = 1; i <= 2; i++) {
+        addAnswer();
+    }
+    
+    // Add new answer
+    $('#addAnswerBtn').click(function() {
+        addAnswer();
+    });
+    
+    // Remove answer
+    $(document).on('click', '.remove-answer', function() {
+        if ($('.answer-card').length > 2) {
+            $(this).closest('.answer-card').remove();
+            updateAnswerNumbers();
+        } else {
+            alert('Ҳадди ақал 2 ҷавоб бояд бошад!');
+        }
+    });
+    
+    // Toggle correct answer
+    $(document).on('change', '.correct-checkbox', function() {
+        const card = $(this).closest('.answer-card');
+        if ($(this).is(':checked')) {
+            card.addClass('correct');
+            card.find('.correct-label').show();
+        } else {
+            card.removeClass('correct');
+            card.find('.correct-label').hide();
+        }
+    });
+    
+    // Add answer function
+    function addAnswer() {
+        answerCounter++;
+        
+        const answerCard = `
+        <div class="card answer-card" id="answerCard${answerCounter}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="answer-number me-3">${answerCounter}</div>
+                        <div>
+                            <h6 class="mb-0">Ҷавоб ${answerCounter}</h6>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="correct-label correct-badge me-2" style="display: none;">
+                            <i class="fas fa-check"></i> Дуруст
+                        </span>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-answer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <textarea class="form-control answer-text" 
+                              placeholder="Матни ҷавоб..."
+                              rows="2" required></textarea>
+                </div>
+                
+                <div class="form-check">
+                    <input class="form-check-input correct-checkbox" 
+                           type="checkbox" 
+                           id="correct${answerCounter}">
+                    <label class="form-check-label" for="correct${answerCounter}">
+                        Ин ҷавоб дуруст аст
+                    </label>
+                </div>
+            </div>
+        </div>
+        `;
+        
+        $('#answersContainer').append(answerCard);
+        updateAnswerNumbers();
+    }
+    
+    // Update answer numbers
+    function updateAnswerNumbers() {
+        $('.answer-card').each(function(index) {
+            const newNumber = index + 1;
+            $(this).find('.answer-number').text(newNumber);
+            $(this).find('h6').text(`Ҷавоб ${newNumber}`);
+            $(this).find('.correct-checkbox').attr('id', `correct${newNumber}`);
+            $(this).find('label[for^="correct"]').attr('for', `correct${newNumber}`);
+        });
+    }
+    
+    // Form submission
+    $('#questionForm').submit(function(e) {
+        e.preventDefault();
+        
+        // Get question data
+        const questionText = $('#id_text').val().trim();
+        const questionType = $('#id_question_type').val();
+        const points = $('#id_points').val();
+        const hint = $('#id_hint').val().trim();
+        const explanation = $('#id_explanation').val().trim();
+        
+        // Validate question text
+        if (!questionText) {
+            alert('Матни саволро ворид кунед!');
+            $('#id_text').focus();
+            return false;
+        }
+        
+        if (!points || points < 1 || points > 100) {
+            alert('Ҳаққҳо бояд байни 1 то 100 бошад!');
+            $('#id_points').focus();
+            return false;
+        }
+        
+        // Collect answers
+        const answers = [];
+        let hasCorrectAnswer = false;
+        
+        $('.answer-card').each(function(index) {
+            const answerText = $(this).find('.answer-text').val().trim();
+            const isCorrect = $(this).find('.correct-checkbox').is(':checked');
+            
+            if (answerText) {
+                answers.push({
+                    text: answerText,
+                    is_correct: isCorrect
+                });
+                
+                if (isCorrect) {
+                    hasCorrectAnswer = true;
+                }
+            }
+        });
+        
+        // Validate answers
+        if (answers.length < 2) {
+            alert('Ҳадди ақал 2 ҷавоб илова кунед!');
+            return false;
+        }
+        
+        if (!hasCorrectAnswer) {
+            alert('Ҳадди ақал як ҷавоби дурустро интихоб кунед!');
+            return false;
+        }
+        
+        // Create form data
+        const formData = new FormData(this);
+        formData.append('answers', JSON.stringify(answers));
+        
+        // Add AJAX header
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', this.action);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        
+        // Show loading
+        $('button[type="submit"]').prop('disabled', true).html(
+            '<i class="fas fa-spinner fa-spin me-2"></i>Захира карда истодааст...'
+        );
+        
+        // Send request
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                const response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    // Show success message
+                    alert(response.message);
+                    
+                    // Redirect or reload
+                    if (response.redirect) {
+                        window.location.href = response.redirect;
+                    } else {
+                        window.location.href = "{% url 'quiz_detail' quiz.id %}";
+                    }
+                } else {
+                    alert(response.message || 'Хатогӣ дар захира кардани савол!');
+                    $('button[type="submit"]').prop('disabled', false).html(
+                        '<i class="fas fa-save me-2"></i>Захира кардан'
+                    );
+                }
+            } else {
+                alert('Хатогии сервер! Лутфан бори дигар кӯшиш кунед.');
+                $('button[type="submit"]').prop('disabled', false).html(
+                    '<i class="fas fa-save me-2"></i>Захира кардан'
+                );
+            }
+        };
+        
+        xhr.send(formData);
+    });
+});
+</script>
+{% endblock %}
