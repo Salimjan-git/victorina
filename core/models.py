@@ -100,7 +100,18 @@ class Subject(models.Model):
     )
     
     name = models.CharField(max_length=100)
+    code = models.CharField(max_length=20, blank=True, null=True)
+    grade_level = models.CharField(max_length=20, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    color = models.CharField(max_length=7, default="#4361ee")
+    icon = models.CharField(max_length=50, default="fas fa-book")
+    is_public = models.BooleanField(default=True)
+    requires_approval = models.BooleanField(default=False)
+    max_students = models.PositiveIntegerField(default=0)
+    pass_percentage = models.PositiveIntegerField(default=60)
+    prerequisites = models.TextField(blank=True, null=True)
     level_type = models.CharField(max_length=20, choices=LEVEL_TYPE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         verbose_name = 'Фан'
@@ -109,6 +120,7 @@ class Subject(models.Model):
     
     def __str__(self):
         return f"{self.name} ({self.get_level_type_display()})"
+    
 
 
 class Group(models.Model):
@@ -139,6 +151,7 @@ class GroupMember(models.Model):
         return f"{self.user.username} in {self.group.name}"
 
 
+# core/models.py - обновите класс Quiz
 class Quiz(models.Model):
     MODE_CHOICES = (
         ('individual', 'Индивидуалӣ'),
@@ -157,19 +170,32 @@ class Quiz(models.Model):
         ('finished', 'Анҷомёфта'),
     )
     
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='quizzes')
-    quiz_mode = models.CharField(max_length=20, choices=MODE_CHOICES)
-    level_type = models.CharField(max_length=20, choices=LEVEL_TYPE_CHOICES)
-    start_level = models.IntegerField()
-    end_level = models.IntegerField()
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
-    is_online = models.BooleanField(default=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_quizzes')
-    created_at = models.DateTimeField(auto_now_add=True)
+    title = models.CharField(max_length=200, verbose_name="Сарлавҳа")
+    description = models.TextField(blank=True, verbose_name="Тавсиф")
+    # Делаем subject необязательным
+    subject = models.ForeignKey(
+        Subject, 
+        on_delete=models.SET_NULL,  # Изменяем на SET_NULL
+        related_name='quizzes', 
+        verbose_name="Фан",
+        null=True,  # Добавляем null
+        blank=True  # Добавляем blank
+    )
+    quiz_mode = models.CharField(max_length=20, choices=MODE_CHOICES, verbose_name="Реҷаи викторина")
+    level_type = models.CharField(max_length=20, choices=LEVEL_TYPE_CHOICES, verbose_name="Навъи сатҳ")
+    start_level = models.IntegerField(verbose_name="Сатҳи оғоз")
+    end_level = models.IntegerField(verbose_name="Сатҳи анҷом")
+    start_time = models.DateTimeField(verbose_name="Вақти оғоз")
+    end_time = models.DateTimeField(verbose_name="Вақти анҷом")
+    is_online = models.BooleanField(default=True, verbose_name="Онлайн")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name="Статус")
+    
+    time_limit = models.IntegerField(default=30, verbose_name="Мӯҳлати вақт (дақиқа)", help_text="Дақиқаҳо")
+    max_attempts = models.IntegerField(default=1, verbose_name="Максимум кӯшишҳо", help_text="Максимум кӯшишҳо")
+    pass_percentage = models.IntegerField(default=60, verbose_name="Фоиз барои гузарондан", help_text="Фоизи гузарондан")
+    
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_quizzes', verbose_name="Эҷодкунанда")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Санаи эҷод")
     
     class Meta:
         verbose_name = 'Викторина'
@@ -177,14 +203,12 @@ class Quiz(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.title} ({self.get_quiz_mode_display()})"
+        subject_name = self.subject.name if self.subject else "Без предмета"
+        return f"{self.title} ({subject_name})"
     
     def is_active(self):
         now = timezone.now()
         return self.status == 'active' and self.start_time <= now <= self.end_time
-    
-    def get_total_points(self):
-        return self.questions.aggregate(total=models.Sum('points'))['total'] or 0
 
 
 class Question(models.Model):

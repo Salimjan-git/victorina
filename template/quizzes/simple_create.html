@@ -1,0 +1,289 @@
+<!-- templates/quizzes/simple_create.html -->
+{% extends "base.html" %}
+
+{% block title %}Эҷоди викторинаи нав{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        Эҷоди викторинаи нав
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_title" class="form-label fw-bold">Унвони викторина</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.title.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label fw-bold">Тавсиф</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.description.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="id_subject" class="form-label fw-bold">Фан</label>
+                                {{ form.subject }}
+                                <small class="text-muted">Ихтиёрӣ. Агар интихоб накунед, викторина ба ҳама фанҳо дастрас аст.</small>
+                                {% if form.subject.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.subject.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_quiz_mode" class="form-label fw-bold">Реҷаи викторина</label>
+                                {{ form.quiz_mode }}
+                                {% if form.quiz_mode.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.quiz_mode.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="id_level_type" class="form-label fw-bold">Навъи сатҳ</label>
+                                {{ form.level_type }}
+                                {% if form.level_type.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.level_type.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                <label for="id_start_level" class="form-label fw-bold">Сатҳи оғоз</label>
+                                {{ form.start_level }}
+                                {% if form.start_level.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.start_level.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                <label for="id_end_level" class="form-label fw-bold">Сатҳи анҷом</label>
+                                {{ form.end_level }}
+                                {% if form.end_level.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.end_level.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="id_start_time" class="form-label fw-bold">Вақти оғоз</label>
+                                {{ form.start_time }}
+                                {% if form.start_time.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.start_time.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_end_time" class="form-label fw-bold">Вақти анҷом</label>
+                                {{ form.end_time }}
+                                {% if form.end_time.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.end_time.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="id_time_limit" class="form-label fw-bold">Мӯҳлати вақт (дақиқа)</label>
+                                {{ form.time_limit }}
+                                {% if form.time_limit.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.time_limit.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="id_max_attempts" class="form-label fw-bold">Максимум кӯшишҳо</label>
+                                {{ form.max_attempts }}
+                                {% if form.max_attempts.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.max_attempts.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="id_pass_percentage" class="form-label fw-bold">Фоиз барои гузарондан</label>
+                                {{ form.pass_percentage }}
+                                {% if form.pass_percentage.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.pass_percentage.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="id_status" class="form-label fw-bold">Статус</label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.status.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mt-4">
+                                    {{ form.is_online }}
+                                    <label class="form-check-label" for="{{ form.is_online.id_for_label }}">
+                                        Онлайн викторина
+                                    </label>
+                                </div>
+                                {% if form.is_online.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.is_online.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Пас аз эҷоди викторина, шумо метавонед дар саҳифаи викторина саволҳо илова кунед.
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'quiz_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i> Бекор кардан
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i> Эҷод кардан
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Установить значения datetime-local по умолчанию если поля пустые
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const nextWeek = new Date(tomorrow.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    // Форматирование для datetime-local
+    function formatDateTime(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    
+    // Установить значения если поля пустые
+    const startTimeInput = document.getElementById('id_start_time');
+    const endTimeInput = document.getElementById('id_end_time');
+    
+    if (startTimeInput && !startTimeInput.value) {
+        startTimeInput.value = formatDateTime(tomorrow);
+    }
+    if (endTimeInput && !endTimeInput.value) {
+        endTimeInput.value = formatDateTime(nextWeek);
+    }
+    
+    // Валидация на клиенте
+    function validateForm() {
+        const startTime = new Date(document.getElementById('id_start_time').value);
+        const endTime = new Date(document.getElementById('id_end_time').value);
+        
+        if (endTime <= startTime) {
+            alert('Вақти анҷом бояд пеш аз вақти оғоз бошад!');
+            return false;
+        }
+        
+        const startLevel = parseInt(document.getElementById('id_start_level').value);
+        const endLevel = parseInt(document.getElementById('id_end_level').value);
+        
+        if (startLevel > endLevel) {
+            alert('Сатҳи оғоз набояд аз сатҳи анҷом зиёд бошад!');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Добавить валидацию при отправке формы
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+
+<style>
+    .form-control, .form-select {
+        padding: 0.5rem;
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+        width: 100%;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+    }
+</style>
+{% endblock %}

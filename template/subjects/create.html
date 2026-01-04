@@ -1,0 +1,529 @@
+<!-- templates/subjects/create.html -->
+{% extends "base.html" %}
+
+{% block title %}Эҷоди фани нав{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Дашборд</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'subject_list' %}">Фанҳо</a></li>
+            <li class="breadcrumb-item active">Эҷоди нав</li>
+        </ol>
+    </nav>
+    
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        Эҷоди фани нав
+                    </h4>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form method="post" id="subjectForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 border-bottom pb-2">
+                                <i class="fas fa-info-circle me-2 text-primary"></i>
+                                Маълумоти асосӣ
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label for="id_name" class="form-label fw-bold">Номи фан</label>
+                                <input type="text" class="form-control form-control-lg" 
+                                       id="id_name" name="name" required
+                                       placeholder="Масалан: Математика, Забони тоҷикӣ, Информатика">
+                                <div class="form-text">Номи пурраи фанро ворид кунед</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="id_code" class="form-label fw-bold">Рамзи фан</label>
+                                    <input type="text" class="form-control" 
+                                           id="id_code" name="code"
+                                           placeholder="Масалан: MATH101, TJV101, INF101">
+                                    <div class="form-text">Рамзи кӯтоҳи фан барои муайян кардани осон</div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="id_grade_level" class="form-label fw-bold">Синфи таҳсилӣ</label>
+                                    <select class="form-select" id="id_grade_level" name="grade_level">
+                                        <option value="" selected>Барои ҳама синфҳо</option>
+                                        <option value="1">Синфи 1</option>
+                                        <option value="2">Синфи 2</option>
+                                        <option value="3">Синфи 3</option>
+                                        <option value="4">Синфи 4</option>
+                                        <option value="5">Синфи 5</option>
+                                        <option value="6">Синфи 6</option>
+                                        <option value="7">Синфи 7</option>
+                                        <option value="8">Синфи 8</option>
+                                        <option value="9">Синфи 9</option>
+                                        <option value="10">Синфи 10</option>
+                                        <option value="11">Синфи 11</option>
+                                        <option value="university">Донишгоҳ</option>
+                                        <option value="other">Дигар</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_description" class="form-label fw-bold">Тавсифи фан</label>
+                                <textarea class="form-control" id="id_description" name="description" 
+                                          rows="4" placeholder="Тавсифи муфассали фанро дар ин ҷо нависед..."></textarea>
+                                <div class="form-text">Тавсифи фан ба донишҷӯён ва омӯзгорон кӯмак мекунад</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Visual Customization -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 border-bottom pb-2">
+                                <i class="fas fa-palette me-2 text-primary"></i>
+                                Танзимоти визуалӣ
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_color" class="form-label fw-bold">Ранги фан</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" 
+                                               id="id_color" name="color" value="#4361ee" title="Рангро интихоб кунед">
+                                        <input type="text" class="form-control" id="colorHex" value="#4361ee" readonly 
+                                               style="max-width: 100px;">
+                                    </div>
+                                    <div class="form-text">Ин ранг дар кортҳо ва графикҳо истифода мешавад</div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_icon" class="form-label fw-bold">Иконаи фан</label>
+                                    <select class="form-select" id="id_icon" name="icon">
+                                        <option value="fas fa-book" selected>📚 Китоб</option>
+                                        <option value="fas fa-calculator">🧮 Ҳисоббарор</option>
+                                        <option value="fas fa-laptop-code">💻 Барномасозӣ</option>
+                                        <option value="fas fa-flask">🧪 Кимиё</option>
+                                        <option value="fas fa-globe-asia">🌏 География</option>
+                                        <option value="fas fa-history">📜 Таърих</option>
+                                        <option value="fas fa-language">🔤 Забон</option>
+                                        <option value="fas fa-music">🎵 Мусиқӣ</option>
+                                        <option value="fas fa-paint-brush">🎨 Санъат</option>
+                                        <option value="fas fa-dumbbell">🏋️ Варзиш</option>
+                                        <option value="fas fa-atom">⚛️ Физика</option>
+                                        <option value="fas fa-seedling">🌱 Биология</option>
+                                    </select>
+                                    <div class="form-text">Икона барои намоиши фан дар дашборд</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Icon Preview -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Намунаи икона</label>
+                                <div class="border rounded p-3 text-center bg-light">
+                                    <div id="iconPreview" class="d-inline-block p-3 rounded-circle" 
+                                         style="background-color: #4361ee20;">
+                                        <i class="fas fa-book fa-3x text-primary"></i>
+                                    </div>
+                                    <div class="mt-2">
+                                        <span id="iconName" class="fw-bold">Китоб</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Course Settings -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 border-bottom pb-2">
+                                <i class="fas fa-cog me-2 text-primary"></i>
+                                Танзимоти курс
+                            </h5>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" 
+                                               id="id_is_public" name="is_public" checked>
+                                        <label class="form-check-label fw-bold" for="id_is_public">
+                                            Фани оммавӣ
+                                        </label>
+                                        <div class="form-text">Агар фаъол бошад, ҳама корбарон метавонанд ба фан номнависӣ кунанд</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" 
+                                               id="id_requires_approval" name="requires_approval">
+                                        <label class="form-check-label fw-bold" for="id_requires_approval">
+                                            Талош барои тасдиқ
+                                        </label>
+                                        <div class="form-text">Агар фаъол бошад, номнависӣ бояд аз ҷониби омӯзгор тасдиқ карда шавад</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_max_students" class="form-label fw-bold">Ҳадди аксар донишҷӯён</label>
+                                    <input type="number" class="form-control" 
+                                           id="id_max_students" name="max_students" min="0" value="0">
+                                    <div class="form-text">0 барои номаҳдуд. Барои муқаррар кардани ҳадди аксар донишҷӯён</div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_pass_percentage" class="form-label fw-bold">Фоизи гузариш</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" 
+                                               id="id_pass_percentage" name="pass_percentage" 
+                                               min="0" max="100" value="60">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="form-text">Миқдори минималии барои гузаштан аз викторина</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_prerequisites" class="form-label fw-bold">Пешниёзҳо</label>
+                                <textarea class="form-control" id="id_prerequisites" name="prerequisites" 
+                                          rows="2" placeholder="Омӯзиши кадом маводҳо пешниҳод карда мешавад?"></textarea>
+                                <div class="form-text">Маълумоте, ки донишҷӯён пеш аз номнависӣ бояд бидонанд</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Learning Objectives -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 border-bottom pb-2">
+                                <i class="fas fa-bullseye me-2 text-primary"></i>
+                                Мақсадҳои омӯзишӣ
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <div id="objectivesContainer">
+                                    <div class="objective-item input-group mb-2">
+                                        <input type="text" class="form-control" name="objectives" 
+                                               placeholder="Масалан: Омӯзиши асосҳои алгебра">
+                                        <button type="button" class="btn btn-outline-danger remove-objective">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="addObjective">
+                                    <i class="fas fa-plus me-1"></i> Иловаи мақсади нав
+                                </button>
+                                <div class="form-text">Мақсадҳои омӯзишӣ ба донишҷӯён кӯмак мекунад, ки чӣ чизҳоро омӯхтанд</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a href="{% url 'subject_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i> Бекор кардан
+                            </a>
+                            
+                            <div class="btn-group">
+                                <button type="submit" name="save_draft" class="btn btn-outline-primary">
+                                    <i class="fas fa-save me-2"></i> Захираи нопурра
+                                </button>
+                                <button type="submit" name="publish" class="btn btn-primary">
+                                    <i class="fas fa-check-circle me-2"></i> Эҷод ва нашр
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Tips Card -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-lightbulb me-2 text-warning"></i>
+                        Маслиҳатҳо барои эҷоди фани муваффақ
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Номи фани равшан ва муайянро истифода баред
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Тавсифи фани муфассал ба донишҷӯён кӯмак мекунад, ки маводҳоро фаҳманд
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Мақсадҳои омӯзишӣ барои муайян кардани натиҷаҳои интизорӣ муҳим аст
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Пеш аз нашр, маълумоти фани худро дубора баррасӣ кунед
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Пешнамоиши фан</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="previewContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Омода карда мешавад...</span>
+                        </div>
+                        <p class="mt-3">Пешнамоиш омода карда мешавад...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control-color {
+    width: 60px;
+    height: 45px;
+    padding: 0.375rem;
+}
+
+.objective-item .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.objective-item .remove-objective {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.border-bottom {
+    border-bottom: 2px solid #dee2e6 !important;
+}
+
+.form-control-lg {
+    font-size: 1.1rem;
+    padding: 0.75rem 1rem;
+}
+
+.form-switch .form-check-input {
+    width: 3em;
+    height: 1.5em;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Update color hex value
+    $('#id_color').on('input', function() {
+        $('#colorHex').val($(this).val());
+        $('#iconPreview').css('background-color', $(this).val() + '20');
+        $('#iconPreview i').css('color', $(this).val());
+    });
+    
+    // Update icon preview
+    $('#id_icon').change(function() {
+        const selectedIcon = $(this).val();
+        const iconClass = selectedIcon.split(' ')[1];
+        let iconName = '';
+        
+        // Map icon classes to names
+        const iconNames = {
+            'fa-book': 'Китоб',
+            'fa-calculator': 'Ҳисоббарор',
+            'fa-laptop-code': 'Барномасозӣ',
+            'fa-flask': 'Кимиё',
+            'fa-globe-asia': 'География',
+            'fa-history': 'Таърих',
+            'fa-language': 'Забон',
+            'fa-music': 'Мусиқӣ',
+            'fa-paint-brush': 'Санъат',
+            'fa-dumbbell': 'Варзиш',
+            'fa-atom': 'Физика',
+            'fa-seedling': 'Биология'
+        };
+        
+        for (const key in iconNames) {
+            if (iconClass.includes(key)) {
+                iconName = iconNames[key];
+                break;
+            }
+        }
+        
+        $('#iconPreview i').attr('class', selectedIcon + ' fa-3x');
+        $('#iconName').text(iconName);
+    });
+    
+    // Add/remove learning objectives
+    $('#addObjective').click(function() {
+        const newObjective = `
+            <div class="objective-item input-group mb-2">
+                <input type="text" class="form-control" name="objectives" 
+                       placeholder="Масалан: Омӯзиши асосҳои геометрия">
+                <button type="button" class="btn btn-outline-danger remove-objective">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        $('#objectivesContainer').append(newObjective);
+    });
+    
+    // Remove objective (delegated event)
+    $('#objectivesContainer').on('click', '.remove-objective', function() {
+        if ($('#objectivesContainer .objective-item').length > 1) {
+            $(this).closest('.objective-item').remove();
+        } else {
+            alert('Ҳадди ақал як мақсад бояд бошад');
+        }
+    });
+    
+    // Form validation
+    $('#subjectForm').submit(function(e) {
+        const name = $('#id_name').val().trim();
+        const description = $('#id_description').val().trim();
+        
+        if (!name) {
+            e.preventDefault();
+            showAlert('Лутфан номи фаниро ворид кунед', 'danger');
+            $('#id_name').focus();
+            return false;
+        }
+        
+        if (name.length < 3) {
+            e.preventDefault();
+            showAlert('Номи фан бояд ҳадди ақал 3 ҳарф дошта бошад', 'danger');
+            $('#id_name').focus();
+            return false;
+        }
+        
+        if (!description) {
+            if (!confirm('Шумо тавсифи фанро ворид накардед. Оё мутмаин ҳастед, ки мехоҳед идома диҳед?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        
+        // Validate pass percentage
+        const passPercentage = parseInt($('#id_pass_percentage').val());
+        if (passPercentage < 0 || passPercentage > 100) {
+            e.preventDefault();
+            showAlert('Фоизи гузариш бояд байни 0 ва 100 бошад', 'danger');
+            $('#id_pass_percentage').focus();
+            return false;
+        }
+        
+        return true;
+    });
+    
+    // Preview functionality
+    $('#previewBtn').click(function() {
+        $('#previewModal').modal('show');
+        
+        // Get form data
+        const formData = {
+            name: $('#id_name').val() || 'Намунаи фан',
+            code: $('#id_code').val() || 'CODE101',
+            description: $('#id_description').val() || 'Тавсифи фан вуҷуд надорад',
+            grade_level: $('#id_grade_level option:selected').text(),
+            color: $('#id_color').val(),
+            icon: $('#id_icon').val()
+        };
+        
+        // Generate preview
+        setTimeout(function() {
+            $('#previewContent').html(`
+                <div class="card" style="border-left: 5px solid ${formData.color}">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="rounded-circle p-3 me-3" 
+                                 style="background-color: ${formData.color}20; color: ${formData.color}">
+                                <i class="${formData.icon} fa-2x"></i>
+                            </div>
+                            <div>
+                                <h4 class="card-title">${formData.name}</h4>
+                                <h6 class="card-subtitle text-muted">${formData.code} | ${formData.grade_level}</h6>
+                            </div>
+                        </div>
+                        
+                        <p class="card-text">${formData.description}</p>
+                        
+                        <div class="row mt-4">
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <div class="display-6 fw-bold text-primary">0</div>
+                                    <small class="text-muted">Викторинаҳо</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <div class="display-6 fw-bold text-success">0</div>
+                                    <small class="text-muted">Саволҳо</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Ин танҳо пешнамоиш аст. Барои эҷоди фан, тугмаи "Эҷод ва нашр"-ро пахш кунед.
+                        </div>
+                    </div>
+                </div>
+            `);
+        }, 500);
+    });
+    
+    // Auto-generate code from name
+    $('#id_name').on('blur', function() {
+        if (!$('#id_code').val()) {
+            const name = $(this).val().trim();
+            if (name.length >= 3) {
+                // Generate code (first 3 letters + 101)
+                const code = name.substring(0, 3).toUpperCase() + '101';
+                $('#id_code').val(code);
+            }
+        }
+    });
+    
+    // Alert function
+    function showAlert(message, type) {
+        const alertHtml = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                <i class="fas fa-${type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        // Remove any existing alerts
+        $('.alert').remove();
+        
+        // Add new alert at the top of form
+        $('#subjectForm').prepend(alertHtml);
+        
+        // Auto remove after 5 seconds
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+    }
+    
+    // Set up preview button (if exists)
+    $('<button type="button" class="btn btn-outline-info me-2" id="previewBtn">' +
+      '<i class="fas fa-eye me-2"></i>Пешнамоиш</button>')
+      .insertBefore('button[name="save_draft"]');
+});
+</script>
+{% endblock %}

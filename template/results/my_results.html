@@ -1,0 +1,725 @@
+<!-- templates/results/my_results.html -->
+{% extends "base.html" %}
+
+{% block title %}Натиҷаҳои ман{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-5 fw-bold">
+                <i class="fas fa-chart-line me-2 text-primary"></i>
+                Натиҷаҳои ман
+            </h1>
+            <p class="lead text-muted">
+                Таҳлили натиҷаҳо ва пешрафти шумо дар викторинаҳо
+            </p>
+        </div>
+    </div>
+
+    <!-- Overall Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-primary border-2 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Викторинаҳои анҷомдода</h6>
+                            <h2 class="fw-bold text-primary">{{ stats.total_attempts|default:"0" }}</h2>
+                        </div>
+                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary p-3">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">Ҷамъи умумии иҷроҳо</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-success border-2 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Миёнаи натиҷа</h6>
+                            <h2 class="fw-bold text-success">{{ stats.average_score|default:"0" }}%</h2>
+                        </div>
+                        <div class="rounded-circle bg-success bg-opacity-10 text-success p-3">
+                            <i class="fas fa-chart-bar fa-2x"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">Миёнаи фоизҳо</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-info border-2 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Натиҷаи беҳтарин</h6>
+                            <h2 class="fw-bold text-info">{{ stats.best_score|default:"0" }}%</h2>
+                        </div>
+                        <div class="rounded-circle bg-info bg-opacity-10 text-info p-3">
+                            <i class="fas fa-trophy fa-2x"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">Беҳтарин фоиз</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-warning border-2 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Вақти миёна</h6>
+                            <h2 class="fw-bold text-warning">{{ stats.average_time|default:"0" }}</h2>
+                        </div>
+                        <div class="rounded-circle bg-warning bg-opacity-10 text-warning p-3">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">Дақиқа барои иҷро</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Summary -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2 text-primary"></i>
+                        Пешрафти натиҷаҳо
+                    </h5>
+                    <select class="form-select form-select-sm w-auto" id="timeRange">
+                        <option value="7">7 рӯзи охир</option>
+                        <option value="30" selected>30 рӯзи охир</option>
+                        <option value="90">3 моҳи охир</option>
+                        <option value="365">1 соли охир</option>
+                        <option value="all">Ҳама вақт</option>
+                    </select>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-trophy me-2 text-warning"></i>
+                        Муваффақиятҳо
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="display-4 fw-bold text-warning">{{ stats.achievements_count|default:"0" }}</div>
+                        <small class="text-muted">Муваффақиятҳои ба даст оварда</small>
+                    </div>
+
+                    <div class="list-group list-group-flush">
+                        {% for achievement in recent_achievements %}
+                        <div class="list-group-item d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="rounded-circle bg-warning bg-opacity-10 text-warning p-2">
+                                    <i class="{{ achievement.icon|default:'fas fa-medal' }}"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">{{ achievement.name }}</h6>
+                                <small class="text-muted">{{ achievement.description }}</small>
+                            </div>
+                            <small class="text-muted ms-auto">{{ achievement.earned_date|date:"d.m.Y" }}</small>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-medal fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">Ҳанӯз муваффақият ба даст наовардаед</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    {% if recent_achievements %}
+                    <div class="text-center mt-3">
+                        <a href="#" class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-eye me-1"></i> Ҳама муваффақиятҳо
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject Performance -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-book me-2 text-primary"></i>
+                        Натиҷаҳо ба фанҳо
+                    </h5>
+                    <button class="btn btn-sm btn-outline-primary" id="toggleSubjectChart">
+                        <i class="fas fa-chart-pie me-1"></i> График
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="subjectTable">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Фан</th>
+                                        <th>Викторинаҳо</th>
+                                        <th>Миёнаи натиҷа</th>
+                                        <th>Беҳтарин</th>
+                                        <th>Охирин</th>
+                                        <th>Пешрафт</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for subject in subject_performance %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="rounded-circle me-3" 
+                                                     style="width: 24px; height: 24px; background-color: {{ subject.color|default:'#4361ee' }}20; 
+                                                            display: flex; align-items: center; justify-content: center;">
+                                                    <i class="{{ subject.icon|default:'fas fa-book' }} fa-sm" 
+                                                       style="color: {{ subject.color|default:'#4361ee' }}"></i>
+                                                </div>
+                                                <span class="fw-bold">{{ subject.name }}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ subject.quiz_count }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress flex-grow-1 me-2" style="height: 20px;">
+                                                    <div class="progress-bar 
+                                                        {% if subject.average_score >= 80 %}bg-success
+                                                        {% elif subject.average_score >= 60 %}bg-warning
+                                                        {% else %}bg-danger{% endif %}" 
+                                                        style="width: {{ subject.average_score }}%">
+                                                    </div>
+                                                </div>
+                                                <span class="fw-bold">{{ subject.average_score }}%</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">{{ subject.best_score }}%</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ subject.last_score }}%</span>
+                                        </td>
+                                        <td>
+                                            {% if subject.trend == 'up' %}
+                                            <span class="text-success">
+                                                <i class="fas fa-arrow-up"></i> +{{ subject.improvement }}%
+                                            </span>
+                                            {% elif subject.trend == 'down' %}
+                                            <span class="text-danger">
+                                                <i class="fas fa-arrow-down"></i> {{ subject.improvement }}%
+                                            </span>
+                                            {% else %}
+                                            <span class="text-muted">
+                                                <i class="fas fa-minus"></i> 0%
+                                            </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <i class="fas fa-book fa-2x text-muted mb-3"></i>
+                                            <p class="text-muted mb-0">Натиҷае барои намоиш вуҷуд надорад</p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="subjectChart" style="display: none;">
+                        <canvas id="subjectPerformanceChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results History -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2 text-primary"></i>
+                        Таърихи натиҷаҳо
+                    </h5>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary active" data-filter="all">Ҳама</button>
+                        <button class="btn btn-outline-primary" data-filter="week">Ин ҳафта</button>
+                        <button class="btn btn-outline-primary" data-filter="month">Ин моҳ</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="resultsTable">
+                            <thead>
+                                <tr>
+                                    <th>Викторина</th>
+                                    <th>Фан</th>
+                                    <th>Сана</th>
+                                    <th>Натиҷа</th>
+                                    <th>Саволҳо</th>
+                                    <th>Вақт</th>
+                                    <th>Мақом</th>
+                                    <th>Амалҳо</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in results %}
+                                <tr data-date="{{ result.completed_at|date:'Y-m-d' }}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">
+                                                {% if result.is_best %}
+                                                <i class="fas fa-crown text-warning" title="Беҳтарин натиҷа"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">{{ result.quiz.title }}</h6>
+                                                <small class="text-muted">{{ result.quiz.description|truncatewords:5 }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ result.quiz.subject.name }}</span>
+                                    </td>
+                                    <td>
+                                        <small>{{ result.completed_at|date:"d.m.Y" }}</small><br>
+                                        <small class="text-muted">{{ result.completed_at|time:"H:i" }}</small>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1 me-2" style="height: 20px;">
+                                                <div class="progress-bar 
+                                                    {% if result.score_percentage >= 80 %}bg-success
+                                                    {% elif result.score_percentage >= 60 %}bg-warning
+                                                    {% else %}bg-danger{% endif %}" 
+                                                    style="width: {{ result.score_percentage }}%">
+                                                </div>
+                                            </div>
+                                            <span class="fw-bold">{{ result.score_percentage }}%</span>
+                                        </div>
+                                        <small class="text-muted">
+                                            {{ result.correct_answers }}/{{ result.total_questions }} савол
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ result.total_questions }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-dark">{{ result.time_taken }} дақ</span>
+                                    </td>
+                                    <td>
+                                        {% if result.rank <= 3 %}
+                                        <span class="badge bg-warning">#{{ result.rank }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">#{{ result.rank }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'quiz_result' result.pk %}" 
+                                               class="btn btn-outline-primary" title="Дидани тафсилот">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'quiz_detail' result.quiz.pk %}" 
+                                               class="btn btn-outline-info" title="Такрор кардан">
+                                                <i class="fas fa-redo"></i>
+                                            </a>
+                                            {% if result.can_download %}
+                                            <button class="btn btn-outline-success" title="Содироти сертификат">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-4">
+                                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                                        <h5 class="text-muted">Натиҷаҳо вуҷуд надоранд</h5>
+                                        <p class="text-muted">Шумо ҳанӯз ягон викторинаро анҷом надодаед</p>
+                                        <a href="{% url 'quiz_list' %}" class="btn btn-primary">
+                                            <i class="fas fa-play-circle me-2"></i> Викторина оғоз кунед
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if is_paginated %}
+                    <nav aria-label="Пагинация" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                            {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Study Recommendations -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2 text-warning"></i>
+                        Маслиҳатҳои такмили маҳорат
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for recommendation in recommendations %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-start mb-3">
+                                        <div class="rounded-circle p-2 me-3" 
+                                             style="background-color: {{ recommendation.color|default:'#4361ee' }}20;">
+                                            <i class="{{ recommendation.icon|default:'fas fa-book' }}" 
+                                               style="color: {{ recommendation.color|default:'#4361ee' }}"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1">{{ recommendation.title }}</h6>
+                                            <small class="text-muted">{{ recommendation.subject }}</small>
+                                        </div>
+                                    </div>
+                                    <p class="mb-2">{{ recommendation.description }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            Миёнаи шумо: {{ recommendation.your_score }}%
+                                        </small>
+                                        <a href="{% url 'quiz_list' %}?subject={{ recommendation.subject_id }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            Амалӣ кунед
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12 text-center py-3">
+                            <i class="fas fa-lightbulb fa-2x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">Барои такмили маҳорат, бисёртар викторина оғоз кунед</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.border-2 {
+    border-width: 2px !important;
+}
+
+.progress {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    border-radius: 10px;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+
+.badge {
+    font-weight: 500;
+}
+
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize performance chart
+    const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+    const performanceChart = new Chart(performanceCtx, {
+        type: 'line',
+        data: {
+            labels: {{ performance_labels|safe|default:"[]" }},
+            datasets: [{
+                label: 'Натиҷаҳо (%)',
+                data: {{ performance_data|safe|default:"[]" }},
+                borderColor: '#4361ee',
+                backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#4361ee',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return `Натиҷа: ${context.parsed.y}%`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    }
+                }
+            }
+        }
+    });
+
+    // Initialize subject performance chart
+    const subjectCtx = document.getElementById('subjectPerformanceChart').getContext('2d');
+    const subjectChart = new Chart(subjectCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ subject_names|safe|default:"[]" }},
+            datasets: [{
+                label: 'Миёнаи натиҷа (%)',
+                data: {{ subject_scores|safe|default:"[]" }},
+                backgroundColor: {{ subject_colors|safe|default:"['#4361ee']" }},
+                borderColor: {{ subject_colors|safe|default:"['#4361ee']" }},
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Time range filter
+    $('#timeRange').change(function() {
+        const days = $(this).val();
+        
+        // In real app, this would be an AJAX call
+        $.ajax({
+            url: window.location.href,
+            type: 'GET',
+            data: { 'days': days },
+            success: function(data) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data, 'text/html');
+                
+                // Update chart data
+                const newLabels = JSON.parse(doc.querySelector('#performanceChart').getAttribute('data-labels') || '[]');
+                const newData = JSON.parse(doc.querySelector('#performanceChart').getAttribute('data-data') || '[]');
+                
+                performanceChart.data.labels = newLabels;
+                performanceChart.data.datasets[0].data = newData;
+                performanceChart.update();
+            }
+        });
+    });
+
+    // Toggle between table and chart for subjects
+    $('#toggleSubjectChart').click(function() {
+        const subjectTable = $('#subjectTable');
+        const subjectChartDiv = $('#subjectChart');
+        
+        if (subjectTable.is(':visible')) {
+            subjectTable.hide();
+            subjectChartDiv.show();
+            $(this).html('<i class="fas fa-table me-1"></i> Ҷадвал');
+            subjectChart.resize();
+        } else {
+            subjectTable.show();
+            subjectChartDiv.hide();
+            $(this).html('<i class="fas fa-chart-pie me-1"></i> График');
+        }
+    });
+
+    // Filter results by time
+    $('.btn-group button[data-filter]').click(function() {
+        $('.btn-group button').removeClass('active');
+        $(this).addClass('active');
+        
+        const filter = $(this).data('filter');
+        const today = new Date();
+        
+        $('#resultsTable tbody tr').each(function() {
+            const dateStr = $(this).data('date');
+            if (!dateStr) return;
+            
+            const resultDate = new Date(dateStr);
+            const timeDiff = today - resultDate;
+            const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+            
+            let show = true;
+            
+            switch(filter) {
+                case 'week':
+                    show = daysDiff <= 7;
+                    break;
+                case 'month':
+                    show = daysDiff <= 30;
+                    break;
+            }
+            
+            if (show) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
+    // Download certificate
+    $('.btn-outline-success').click(function() {
+        const resultId = $(this).closest('tr').data('result-id');
+        
+        // In real app, this would open a download dialog
+        alert('Сертификат барои содирот омода карда мешавад...');
+        
+        // Simulate download
+        setTimeout(function() {
+            alert('Сертификат бомуваффақият зеркашӣ карда шуд!');
+        }, 1000);
+    });
+
+    // Auto-refresh stats every minute
+    setInterval(function() {
+        $.ajax({
+            url: window.location.href,
+            type: 'GET',
+            data: { 'refresh': 'stats' },
+            success: function(data) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data, 'text/html');
+                
+                // Update stats cards
+                const stats = {
+                    total_attempts: doc.querySelector('.card.border-primary h2')?.textContent,
+                    average_score: doc.querySelector('.card.border-success h2')?.textContent,
+                    best_score: doc.querySelector('.card.border-info h2')?.textContent,
+                    average_time: doc.querySelector('.card.border-warning h2')?.textContent
+                };
+                
+                // Update if values exist
+                if (stats.total_attempts) {
+                    $('.card.border-primary h2').text(stats.total_attempts);
+                }
+                if (stats.average_score) {
+                    $('.card.border-success h2').text(stats.average_score);
+                }
+                if (stats.best_score) {
+                    $('.card.border-info h2').text(stats.best_score);
+                }
+                if (stats.average_time) {
+                    $('.card.border-warning h2').text(stats.average_time);
+                }
+            }
+        });
+    }, 60000); // Every minute
+});
+</script>
+{% endblock %}

@@ -1,0 +1,899 @@
+<!-- templates/groups/list.html -->
+{% extends "base.html" %}
+
+{% block title %}Гурӯҳҳо{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-5 fw-bold">
+                <i class="fas fa-users me-2 text-primary"></i>
+                Гурӯҳҳо
+            </h1>
+            <p class="lead text-muted">
+                Ба гурӯҳҳо ҳамроҳ шавед, бо дигарон ҳамкорӣ кунед ва викторинаҳои гурӯҳиро иҷро кунед
+            </p>
+        </div>
+        <div class="col-auto">
+            {% if user.role == 'teacher' or user.role == 'admin' %}
+            <a href="{% url 'group_create' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus-circle me-2"></i> Гурӯҳи нав
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-primary border-2 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Гурӯҳҳои ман</h6>
+                            <h2 class="fw-bold text-primary">{{ stats.my_groups|default:"0" }}</h2>
+                        </div>
+                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary p-3">
+                            <i class="fas fa-user-friends fa-2x"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">Шумо аъзои ҳастед</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-success border-2 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Гурӯҳҳои оммавӣ</h6>
+                            <h2 class="fw-bold text-success">{{ stats.public_groups|default:"0" }}</h2>
+                        </div>
+                        <div class="rounded-circle bg-success bg-opacity-10 text-success p-3">
+                            <i class="fas fa-globe-asia fa-2x"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">Барои ҳама дастрас</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-info border-2 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Аъзоҳои умумӣ</h6>
+                            <h2 class="fw-bold text-info">{{ stats.total_members|default:"0" }}</h2>
+                        </div>
+                        <div class="rounded-circle bg-info bg-opacity-10 text-info p-3">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">Аъзоҳои фаъол</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-warning border-2 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Викторинаҳо</h6>
+                            <h2 class="fw-bold text-warning">{{ stats.total_quizzes|default:"0" }}</h2>
+                        </div>
+                        <div class="rounded-circle bg-warning bg-opacity-10 text-warning p-3">
+                            <i class="fas fa-question-circle fa-2x"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">Дар ҳама гурӯҳҳо</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" 
+                               placeholder="Ҷустуҷӯи гурӯҳҳо..." id="searchInput">
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <select class="form-select" id="filterType">
+                        <option value="all">Ҳама гурӯҳҳо</option>
+                        <option value="my_groups">Гурӯҳҳои ман</option>
+                        <option value="public">Оммавӣ</option>
+                        <option value="private">Хусусӣ</option>
+                        <option value="can_join">Метавонам ҳамроҳ шавам</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <select class="form-select" id="filterCategory">
+                        <option value="">Ҳама категорияҳо</option>
+                        <option value="academic">Омӯзишӣ</option>
+                        <option value="class">Синфӣ</option>
+                        <option value="project">Лоиҳавӣ</option>
+                        <option value="research">Таҳқиқотӣ</option>
+                        <option value="competition">Мусобиқавӣ</option>
+                        <option value="club">Клубӣ</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-outline-primary w-100" id="resetFilters">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Advanced Filters -->
+            <div class="row g-3 mt-3" id="advancedFilters" style="display: none;">
+                <div class="col-md-4">
+                    <label class="form-label">Филтр ба аъзоҳо</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="filterMembersMin" placeholder="Аз">
+                        <span class="input-group-text">то</span>
+                        <input type="number" class="form-control" id="filterMembersMax" placeholder="То">
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <label class="form-label">Филтр ба викторинаҳо</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="filterQuizzesMin" placeholder="Аз">
+                        <span class="input-group-text">то</span>
+                        <input type="number" class="form-control" id="filterQuizzesMax" placeholder="То">
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <label class="form-label">Ҷобаҷокунии натиҷа</label>
+                    <select class="form-select" id="filterSort">
+                        <option value="recent">Охирин</option>
+                        <option value="popular">Маъмултар</option>
+                        <option value="members">Аъзоҳои бештар</option>
+                        <option value="name_asc">Ном (А-Я)</option>
+                        <option value="name_desc">Ном (Я-А)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="text-end mt-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleAdvancedFilters">
+                    <i class="fas fa-sliders-h me-1"></i> Филтрҳои иловагӣ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Groups Tabs -->
+    <div class="mb-4">
+        <ul class="nav nav-tabs" id="groupTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="all-groups-tab" data-bs-toggle="tab" data-bs-target="#all-groups" type="button">
+                    <i class="fas fa-list me-2"></i> Ҳама гурӯҳҳо
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="my-groups-tab" data-bs-toggle="tab" data-bs-target="#my-groups" type="button">
+                    <i class="fas fa-user-friends me-2"></i> Гурӯҳҳои ман
+                    {% if my_groups_count %}
+                    <span class="badge bg-primary ms-1">{{ my_groups_count }}</span>
+                    {% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="created-groups-tab" data-bs-toggle="tab" data-bs-target="#created-groups" type="button">
+                    <i class="fas fa-crown me-2"></i> Гурӯҳҳои ман эҷод карда
+                    {% if created_groups_count %}
+                    <span class="badge bg-warning ms-1">{{ created_groups_count }}</span>
+                    {% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="popular-groups-tab" data-bs-toggle="tab" data-bs-target="#popular-groups" type="button">
+                    <i class="fas fa-fire me-2"></i> Маъмул
+                    <span class="badge bg-danger ms-1">🔥</span>
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="groupTabContent">
+        <!-- All Groups Tab -->
+        <div class="tab-pane fade show active" id="all-groups" role="tabpanel">
+            <div class="row" id="allGroupsContainer">
+                {% for group in groups %}
+                <div class="col-md-6 col-lg-4 mb-4 group-card" 
+                     data-id="{{ group.id }}"
+                     data-name="{{ group.name|lower }}"
+                     data-type="{% if group.is_public %}public{% else %}private{% endif %}"
+                     data-category="{{ group.category|default:'' }}"
+                     data-members="{{ group.members.count }}"
+                     data-quizzes="{{ group.quizzes.count }}"
+                     data-is-member="{% if user in group.members.all %}true{% else %}false{% endif %}"
+                     data-is-creator="{% if user == group.created_by %}true{% else %}false{% endif %}">
+                    {% include "groups/_group_card.html" with group=group %}
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">Гурӯҳҳо вуҷуд надоранд</h4>
+                            <p class="text-muted">Ҳанӯз ягон гурӯҳ эҷод нашудааст</p>
+                            {% if user.role == 'teacher' or user.role == 'admin' %}
+                            <a href="{% url 'group_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-2"></i> Якумро эҷод кунед
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- My Groups Tab -->
+        <div class="tab-pane fade" id="my-groups" role="tabpanel">
+            <div class="row" id="myGroupsContainer">
+                {% for group in my_groups %}
+                <div class="col-md-6 col-lg-4 mb-4 group-card">
+                    {% include "groups/_group_card.html" with group=group %}
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-user-friends fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">Гурӯҳҳои ман нестанд</h4>
+                            <p class="text-muted">Шумо ҳанӯз ба ягон гурӯҳ ҳамроҳ нашудаед</p>
+                            <a href="#all-groups" class="btn btn-primary" data-bs-toggle="tab">
+                                <i class="fas fa-search me-2"></i> Гурӯҳҳо ёбед
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Created Groups Tab -->
+        <div class="tab-pane fade" id="created-groups" role="tabpanel">
+            <div class="row" id="createdGroupsContainer">
+                {% for group in created_groups %}
+                <div class="col-md-6 col-lg-4 mb-4 group-card">
+                    {% include "groups/_group_card.html" with group=group %}
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-crown fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">Гурӯҳҳои эҷодкарда нестанд</h4>
+                            <p class="text-muted">Шумо ҳанӯз ягон гурӯҳ эҷод накардаед</p>
+                            <a href="{% url 'group_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-2"></i> Гурӯҳи нав эҷод кунед
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Popular Groups Tab -->
+        <div class="tab-pane fade" id="popular-groups" role="tabpanel">
+            <div class="row" id="popularGroupsContainer">
+                {% for group in popular_groups %}
+                <div class="col-md-6 col-lg-4 mb-4 group-card">
+                    {% include "groups/_group_card.html" with group=group %}
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-fire fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">Гурӯҳҳои маъмул нестанд</h4>
+                            <p class="text-muted">Ҳанӯз ягон гурӯҳ барои намоиш вуҷуд надорад</p>
+                            <a href="#all-groups" class="btn btn-primary" data-bs-toggle="tab">
+                                <i class="fas fa-list me-2"></i> Дидани ҳама гурӯҳҳо
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="Пагинация" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% else %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+            {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="row mt-5">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+                    <h5>Ба гурӯҳҳо ҳамроҳ шавед</h5>
+                    <p class="text-muted small">Ба гурӯҳҳои дастрас ҳамроҳ шавед ва аз имкониятҳои гурӯҳӣ баҳраманд шавед</p>
+                    <a href="#all-groups" class="btn btn-outline-primary btn-sm" data-bs-toggle="tab">
+                        Гурӯҳҳо ёбед
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-crown fa-3x text-warning mb-3"></i>
+                    <h5>Гурӯҳи худро эҷод кунед</h5>
+                    <p class="text-muted small">Гурӯҳи худро эҷод кунед, аъзоҳо даъват кунед ва викторинаҳо ташкил кунед</p>
+                    <a href="{% url 'group_create' %}" class="btn btn-outline-warning btn-sm">
+                        Эҷод кунед
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line fa-3x text-success mb-3"></i>
+                    <h5>Пешрафти гурӯҳӣ</h5>
+                    <p class="text-muted small">Натиҷаҳои гурӯҳӣ ва омори аъзоҳоро пайгирӣ кунед</p>
+                    <a href="#" class="btn btn-outline-success btn-sm">
+                        Оморҳо
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Group Card Template -->
+<template id="groupCardTemplate">
+    <div class="col-md-6 col-lg-4 mb-4 group-card">
+        <div class="card h-100 shadow-sm hover-card">
+            <div class="card-header" style="background-color: {color}; color: white;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="{icon} me-2"></i>
+                        {name}
+                    </h5>
+                    <span class="badge bg-light text-dark">{category}</span>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <p class="card-text text-muted mb-3">
+                    {description}
+                </p>
+                
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <small class="text-muted">
+                            <i class="fas fa-users me-1"></i>
+                            {members} аъзо
+                        </small>
+                    </div>
+                    <div class="col-6 text-end">
+                        <small class="text-muted">
+                            <i class="fas fa-question-circle me-1"></i>
+                            {quizzes} викторина
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="fas fa-user me-1"></i>
+                        {creator}
+                    </small>
+                    
+                    <div class="btn-group">
+                        <a href="{detail_url}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {join_button}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-footer bg-white border-top-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        {created_date}
+                    </small>
+                    
+                    {admin_actions}
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Join Group Modal -->
+<div class="modal fade" id="joinGroupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Ҳамроҳ шудан ба гурӯҳ
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Оё шумо мутмаин ҳастед, ки мехоҳед ба гурӯҳ <strong id="groupName"></strong> ҳамроҳ шавед?</p>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Пас аз ҳамроҳ шудан ба гурӯҳ:
+                    <ul class="mb-0 mt-2">
+                        <li>Ба викторинаҳои гурӯҳ дастрасӣ пайдо мекунед</li>
+                        <li>Метавонед дар муҳокимаҳои гурӯҳ иштирок кунед</li>
+                        <li>Натиҷаҳои шумо дар омори гурӯҳ намоиш дода мешаванд</li>
+                        <li>Ҳар вақт метавонед аз гурӯҳ хориҷ шавед</li>
+                    </ul>
+                </div>
+                
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="receiveNotifications">
+                    <label class="form-check-label" for="receiveNotifications">
+                        Огоҳиҳои гурӯҳро қабул кунед
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Бекор кардан</button>
+                <button type="button" class="btn btn-success" id="confirmJoin">
+                    <i class="fas fa-check me-2"></i> Бале, ҳамроҳ шавам
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-card {
+    transition: all 0.3s ease;
+    border: 1px solid #dee2e6;
+}
+
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    border-color: #4361ee;
+}
+
+.nav-tabs .nav-link {
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+}
+
+.nav-tabs .nav-link.active {
+    border-bottom: 3px solid #4361ee;
+    font-weight: 600;
+}
+
+.border-2 {
+    border-width: 2px !important;
+}
+
+.group-card {
+    transition: all 0.3s ease;
+}
+
+.card-header {
+    border-bottom: none;
+    padding: 1rem 1.25rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    let currentGroupId = null;
+    
+    // Toggle advanced filters
+    $('#toggleAdvancedFilters').click(function() {
+        $('#advancedFilters').slideToggle();
+        $(this).toggleClass('btn-secondary btn-outline-secondary');
+    });
+    
+    // Reset filters
+    $('#resetFilters').click(function() {
+        $('#searchInput').val('');
+        $('#filterType').val('all');
+        $('#filterCategory').val('');
+        $('#filterMembersMin').val('');
+        $('#filterMembersMax').val('');
+        $('#filterQuizzesMin').val('');
+        $('#filterQuizzesMax').val('');
+        $('#filterSort').val('recent');
+        
+        applyFilters();
+    });
+    
+    // Search functionality
+    $('#searchInput').on('keyup', function() {
+        applyFilters();
+    });
+    
+    // Filter change handlers
+    $('#filterType, #filterCategory, #filterSort').change(function() {
+        applyFilters();
+    });
+    
+    $('#filterMembersMin, #filterMembersMax, #filterQuizzesMin, #filterQuizzesMax').on('input', function() {
+        applyFilters();
+    });
+    
+    // Apply all filters
+    function applyFilters() {
+        const searchTerm = $('#searchInput').val().toLowerCase();
+        const filterType = $('#filterType').val();
+        const filterCategory = $('#filterCategory').val();
+        const membersMin = parseInt($('#filterMembersMin').val()) || 0;
+        const membersMax = parseInt($('#filterMembersMax').val()) || Infinity;
+        const quizzesMin = parseInt($('#filterQuizzesMin').val()) || 0;
+        const quizzesMax = parseInt($('#filterQuizzesMax').val()) || Infinity;
+        const sortBy = $('#filterSort').val();
+        
+        $('.group-card').each(function() {
+            const groupName = $(this).data('name') || '';
+            const groupType = $(this).data('type') || '';
+            const groupCategory = $(this).data('category') || '';
+            const members = parseInt($(this).data('members')) || 0;
+            const quizzes = parseInt($(this).data('quizzes')) || 0;
+            const isMember = $(this).data('is-member') === 'true';
+            const isCreator = $(this).data('is-creator') === 'true';
+            
+            let shouldShow = true;
+            
+            // Apply search filter
+            if (searchTerm && !groupName.includes(searchTerm)) {
+                shouldShow = false;
+            }
+            
+            // Apply type filter
+            if (filterType === 'my_groups' && !isMember) {
+                shouldShow = false;
+            } else if (filterType === 'public' && groupType !== 'public') {
+                shouldShow = false;
+            } else if (filterType === 'private' && groupType !== 'private') {
+                shouldShow = false;
+            } else if (filterType === 'can_join' && (isMember || groupType !== 'public')) {
+                shouldShow = false;
+            }
+            
+            // Apply category filter
+            if (filterCategory && groupCategory !== filterCategory) {
+                shouldShow = false;
+            }
+            
+            // Apply members filter
+            if (members < membersMin || members > membersMax) {
+                shouldShow = false;
+            }
+            
+            // Apply quizzes filter
+            if (quizzes < quizzesMin || quizzes > quizzesMax) {
+                shouldShow = false;
+            }
+            
+            // Show/hide based on filters
+            if (shouldShow) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+        
+        // Sort if specified
+        if (sortBy) {
+            sortGroups(sortBy);
+        }
+    }
+    
+    // Sort groups
+    function sortGroups(sortBy) {
+        const container = $('#allGroupsContainer');
+        const items = container.find('.group-card:visible').get();
+        
+        items.sort(function(a, b) {
+            const aName = $(a).data('name') || '';
+            const bName = $(b).data('name') || '';
+            const aMembers = parseInt($(a).data('members')) || 0;
+            const bMembers = parseInt($(b).data('members')) || 0;
+            const aQuizzes = parseInt($(a).data('quizzes')) || 0;
+            const bQuizzes = parseInt($(b).data('quizzes')) || 0;
+            const aId = parseInt($(a).data('id')) || 0;
+            const bId = parseInt($(b).data('id')) || 0;
+            
+            switch(sortBy) {
+                case 'name_asc':
+                    return aName.localeCompare(bName);
+                case 'name_desc':
+                    return bName.localeCompare(aName);
+                case 'popular':
+                    return bMembers - aMembers;
+                case 'members':
+                    return bMembers - aMembers;
+                case 'recent':
+                    return bId - aId; // Assuming higher ID = more recent
+                default:
+                    return 0;
+            }
+        });
+        
+        // Reappend sorted items
+        $.each(items, function(idx, item) {
+            container.append(item);
+        });
+    }
+    
+    // Join group modal
+    $(document).on('click', '.join-group-btn', function(e) {
+        e.preventDefault();
+        
+        currentGroupId = $(this).data('group-id');
+        const groupName = $(this).closest('.group-card').find('.card-header h5').text().trim();
+        
+        $('#groupName').text(groupName);
+        $('#joinGroupModal').modal('show');
+    });
+    
+    // Confirm join
+    $('#confirmJoin').click(function() {
+        if (!currentGroupId) return;
+        
+        const receiveNotifications = $('#receiveNotifications').is(':checked');
+        
+        // In real app, this would be an AJAX call
+        $.ajax({
+            url: `/groups/${currentGroupId}/join/`,
+            type: 'POST',
+            data: {
+                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                'notifications': receiveNotifications
+            },
+            success: function(response) {
+                $('#joinGroupModal').modal('hide');
+                
+                // Update UI
+                const groupCard = $(`.join-group-btn[data-group-id="${currentGroupId}"]`).closest('.group-card');
+                groupCard.find('.join-group-btn')
+                    .removeClass('btn-outline-success')
+                    .addClass('btn-success')
+                    .html('<i class="fas fa-check me-1"></i> Аъзо шудаед')
+                    .prop('disabled', true)
+                    .removeClass('join-group-btn')
+                    .addClass('disabled');
+                
+                // Update badge
+                const currentBadge = groupCard.find('.badge.bg-secondary');
+                if (currentBadge.length) {
+                    const currentCount = parseInt(currentBadge.text()) || 0;
+                    currentBadge.text(currentCount + 1);
+                }
+                
+                // Update stats
+                updateStats('increment');
+                
+                // Show success message
+                showAlert('Ба гурӯҳ бомуваффақият ҳамроҳ шудед!', 'success');
+            },
+            error: function(xhr) {
+                $('#joinGroupModal').modal('hide');
+                showAlert('Хатоги дар ҳамроҳ шудан. Лутфан бори дигар кӯшиш кунед.', 'danger');
+            }
+        });
+    });
+    
+    // Update stats
+    function updateStats(action) {
+        // Update my groups count
+        const myGroupsCount = parseInt($('#my-groups-tab .badge').text()) || 0;
+        if (action === 'increment') {
+            $('#my-groups-tab .badge').text(myGroupsCount + 1);
+        } else if (action === 'decrement') {
+            $('#my-groups-tab .badge').text(Math.max(0, myGroupsCount - 1));
+        }
+        
+        // Update stats card
+        const myGroupsCard = $('.card.border-primary h2');
+        const currentCount = parseInt(myGroupsCard.text()) || 0;
+        if (action === 'increment') {
+            myGroupsCard.text(currentCount + 1);
+        } else if (action === 'decrement') {
+            myGroupsCard.text(Math.max(0, currentCount - 1));
+        }
+    }
+    
+    // Leave group
+    $(document).on('click', '.leave-group-btn', function() {
+        const groupId = $(this).data('group-id');
+        const groupName = $(this).closest('.group-card').find('.card-header h5').text().trim();
+        
+        if (confirm(`Оё шумо мутмаин ҳастед, ки мехоҳед аз гурӯҳ "${groupName}" хориҷ шавед?`)) {
+            // In real app, this would be an AJAX call
+            $.ajax({
+                url: `/groups/${groupId}/leave/`,
+                type: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    // Update UI
+                    const groupCard = $(`.leave-group-btn[data-group-id="${groupId}"]`).closest('.group-card');
+                    groupCard.find('.leave-group-btn')
+                        .removeClass('btn-outline-danger')
+                        .addClass('btn-outline-success')
+                        .html('<i class="fas fa-user-plus me-1"></i> Ҳамроҳ шудан')
+                        .removeClass('leave-group-btn')
+                        .addClass('join-group-btn')
+                        .attr('data-group-id', groupId);
+                    
+                    // Update badge
+                    const currentBadge = groupCard.find('.badge.bg-secondary');
+                    if (currentBadge.length) {
+                        const currentCount = parseInt(currentBadge.text()) || 1;
+                        currentBadge.text(Math.max(0, currentCount - 1));
+                    }
+                    
+                    // Update stats
+                    updateStats('decrement');
+                    
+                    // Show success message
+                    showAlert('Аз гурӯҳ бомуваффақият хориҷ шудед!', 'success');
+                },
+                error: function(xhr) {
+                    showAlert('Хатоги дар хориҷ шудан. Лутфан бори дигар кӯшиш кунед.', 'danger');
+                }
+            });
+        }
+    });
+    
+    // Delete group
+    $(document).on('click', '.delete-group-btn', function() {
+        const groupId = $(this).data('group-id');
+        const groupName = $(this).closest('.group-card').find('.card-header h5').text().trim();
+        
+        if (confirm(`Оё шумо мутмаин ҳастед, ки мехоҳед гурӯҳ "${groupName}"-ро нест кунед?\n\nИн амал бозгашт надорад.`)) {
+            // In real app, this would be an AJAX call
+            $.ajax({
+                url: `/groups/${groupId}/delete/`,
+                type: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    $(`.delete-group-btn[data-group-id="${groupId}"]`).closest('.group-card').remove();
+                    showAlert('Гурӯҳ бомуваффақият нест карда шуд!', 'success');
+                    
+                    // Update counts
+                    updateGroupCounts();
+                },
+                error: function(xhr) {
+                    showAlert('Хатоги дар нест кардани гурӯҳ. Лутфан бори дигар кӯшиш кунед.', 'danger');
+                }
+            });
+        }
+    });
+    
+    // Update group counts after deletion
+    function updateGroupCounts() {
+        const totalGroups = $('.group-card').length;
+        const createdGroups = $('.group-card[data-is-creator="true"]').length;
+        const myGroups = $('.group-card[data-is-member="true"]').length;
+        
+        // Update tab badges
+        $('#all-groups-tab .badge').text(totalGroups);
+        $('#created-groups-tab .badge').text(createdGroups);
+        $('#my-groups-tab .badge').text(myGroups);
+    }
+    
+    // Alert function
+    function showAlert(message, type) {
+        const alertHtml = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                <i class="fas fa-${type === 'danger' ? 'exclamation-triangle' : 'check-circle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        // Remove any existing alerts
+        $('.alert').remove();
+        
+        // Add new alert at the top
+        $('.container.py-4').prepend(alertHtml);
+        
+        // Auto remove after 5 seconds
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+    }
+    
+    // Initialize tooltips
+    $('[data-bs-toggle="tooltip"]').tooltip();
+    
+    // Tab change tracking
+    $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+        const tabId = $(e.target).attr('data-bs-target');
+        localStorage.setItem('lastGroupTab', tabId);
+    });
+    
+    // Restore last active tab
+    const lastTab = localStorage.getItem('lastGroupTab');
+    if (lastTab) {
+        const tabButton = $(`button[data-bs-target="${lastTab}"]`);
+        if (tabButton.length) {
+            tabButton.tab('show');
+        }
+    }
+    
+    // Auto-refresh groups every 2 minutes
+    setInterval(function() {
+        $.ajax({
+            url: window.location.href,
+            type: 'GET',
+            data: { 'refresh': true },
+            success: function(data) {
+                // You could implement partial updates here
+                // For now, just update the timestamp
+                const lastUpdate = new Date().toLocaleTimeString();
+                console.log(`Groups last updated: ${lastUpdate}`);
+            }
+        });
+    }, 120000); // Every 2 minutes
+});
+</script>
+{% endblock %}

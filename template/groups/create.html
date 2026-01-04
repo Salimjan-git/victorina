@@ -1,0 +1,757 @@
+<!-- templates/groups/create.html -->
+{% extends "base.html" %}
+
+{% block title %}Эҷоди гурӯҳи нав{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Дашборд</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'group_list' %}">Гурӯҳҳо</a></li>
+            <li class="breadcrumb-item active">Эҷоди нав</li>
+        </ol>
+    </nav>
+    
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        Эҷоди гурӯҳи нав
+                    </h4>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form method="post" id="groupForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 border-bottom pb-2">
+                                <i class="fas fa-info-circle me-2 text-primary"></i>
+                                Маълумоти асосӣ
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label for="id_name" class="form-label fw-bold">Номи гурӯҳ</label>
+                                <input type="text" class="form-control form-control-lg" 
+                                       id="id_name" name="name" required
+                                       placeholder="Масалан: Донишҷӯёни синфи 10, Омӯзгорони математика">
+                                <div class="form-text">Номи муайян ва ҷолиб барои гурӯҳ</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_description" class="form-label fw-bold">Тавсифи гурӯҳ</label>
+                                <textarea class="form-control" id="id_description" name="description" 
+                                          rows="4" placeholder="Тавсифи гурӯҳ, мақсадҳо ва шартҳои аъзошавиро дар ин ҷо нависед..."></textarea>
+                                <div class="form-text">Тавсифи гурӯҳ ба аъзоён кӯмак мекунад, ки мақсадҳои гурӯҳро фаҳманд</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Group Type and Settings -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 border-bottom pb-2">
+                                <i class="fas fa-cog me-2 text-primary"></i>
+                                Навъ ва танзимоти гурӯҳ
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Навъи гурӯҳ</label>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="group_type" 
+                                               id="type_public" value="public" checked>
+                                        <label class="form-check-label" for="type_public">
+                                            <span class="fw-bold">Гурӯҳи оммавӣ</span>
+                                            <small class="d-block text-muted">
+                                                Ҳама метавонанд гурӯҳро бубинанд ва ба он ҳамроҳ шаванд. Барои гурӯҳҳои омӯзишӣ ва фаъолиятҳои умумӣ.
+                                            </small>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="group_type" 
+                                               id="type_private" value="private">
+                                        <label class="form-check-label" for="type_private">
+                                            <span class="fw-bold">Гурӯҳи хусусӣ</span>
+                                            <small class="d-block text-muted">
+                                                Танҳо бо даъват метавон ба гурӯҳ дохил шуд. Барои гурӯҳҳои махсус, лоиҳаҳо ва таҳқиқот.
+                                            </small>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_category" class="form-label fw-bold">Категория</label>
+                                    <select class="form-select" id="id_category" name="category">
+                                        <option value="" selected>Категорияро интихоб кунед</option>
+                                        <option value="academic">Омӯзишӣ</option>
+                                        <option value="class">Синфӣ</option>
+                                        <option value="project">Лоиҳавӣ</option>
+                                        <option value="research">Таҳқиқотӣ</option>
+                                        <option value="competition">Мусобиқавӣ</option>
+                                        <option value="club">Клубӣ</option>
+                                        <option value="other">Дигар</option>
+                                    </select>
+                                    <div class="form-text">Категория барои тасниф кардани осони гурӯҳҳо</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Advanced Settings -->
+                            <div class="accordion" id="advancedSettings">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" 
+                                                data-bs-toggle="collapse" data-bs-target="#collapseSettings">
+                                            <i class="fas fa-sliders-h me-2"></i>
+                                            Танзимотҳои иловагӣ
+                                        </button>
+                                    </h2>
+                                    <div id="collapseSettings" class="accordion-collapse collapse" 
+                                         data-bs-parent="#advancedSettings">
+                                        <div class="accordion-body">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                               id="id_requires_approval" name="requires_approval">
+                                                        <label class="form-check-label" for="id_requires_approval">
+                                                            <span class="fw-bold">Талош барои тасдиқи аъзошавӣ</span>
+                                                        </label>
+                                                        <div class="form-text">
+                                                            Ҳар як дархости аъзошавӣ бояд аз ҷониби модератор тасдиқ карда шавад
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-6 mb-3">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                               id="id_allow_posts" name="allow_posts" checked>
+                                                        <label class="form-check-label" for="id_allow_posts">
+                                                            <span class="fw-bold">Иҷозати паёмҳо</span>
+                                                        </label>
+                                                        <div class="form-text">
+                                                            Иҷозат диҳед, ки аъзоҳо дар гурӯҳ паём бифиристанд
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="id_max_members" class="form-label fw-bold">Ҳадди аксар аъзоҳо</label>
+                                                    <input type="number" class="form-control" 
+                                                           id="id_max_members" name="max_members" min="0" value="0">
+                                                    <div class="form-text">0 барои номаҳдуд. Ҳадди аксари аъзоҳои гурӯҳ</div>
+                                                </div>
+                                                
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="id_default_role" class="form-label fw-bold">Нақши пешфарзи аъзоҳо</label>
+                                                    <select class="form-select" id="id_default_role" name="default_role">
+                                                        <option value="member" selected>Аъзо</option>
+                                                        <option value="moderator">Модератор</option>
+                                                        <option value="viewer">Тамошобин</option>
+                                                    </select>
+                                                    <div class="form-text">Нақши пешфарзи аъзоҳои нав</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Group Image -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 border-bottom pb-2">
+                                <i class="fas fa-image me-2 text-primary"></i>
+                                Тасвири гурӯҳ
+                            </h5>
+                            
+                            <div class="row align-items-center">
+                                <div class="col-md-4 mb-3">
+                                    <div class="image-preview border rounded p-3 text-center bg-light" 
+                                         id="imagePreview" style="height: 200px;">
+                                        <div class="h-100 d-flex flex-column justify-content-center align-items-center">
+                                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                            <p class="text-muted mb-0">Тасвири гурӯҳ</p>
+                                            <small class="text-muted">Иқтибос: 500x500px</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-8 mb-3">
+                                    <label for="id_image" class="form-label fw-bold">Интихоби акс</label>
+                                    <input type="file" class="form-control" id="id_image" name="image" 
+                                           accept="image/*" onchange="previewImage(event)">
+                                    <div class="form-text">
+                                        Акси гурӯҳро интихоб кунед. Форматҳои иҷозатдодашуда: JPG, PNG, GIF. 
+                                        Андозаи акс бояд аз 5MB зиёд набошад.
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <label class="form-label fw-bold">Ранги гурӯҳ</label>
+                                        <div class="d-flex align-items-center">
+                                            <input type="color" class="form-control form-control-color me-3" 
+                                                   id="id_color" name="color" value="#4361ee" title="Рангро интихоб кунед">
+                                            <input type="text" class="form-control" id="colorHex" value="#4361ee" readonly 
+                                                   style="max-width: 120px;">
+                                            <button type="button" class="btn btn-outline-secondary ms-2" 
+                                                    onclick="generateRandomColor()">
+                                                <i class="fas fa-random"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text">Ранги гурӯҳ барои кортҳо ва намоиш</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Initial Members -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 border-bottom pb-2">
+                                <i class="fas fa-user-plus me-2 text-primary"></i>
+                                Аъзоҳои аввалӣ
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Иловаи аъзоҳо</label>
+                                <div class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                                    <div class="mb-3">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" 
+                                                   placeholder="Ҷустуҷӯи корбарон..." id="memberSearch">
+                                            <button class="btn btn-outline-primary" type="button" id="searchMemberBtn">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="membersList" class="mb-3">
+                                        <!-- Members will be loaded here -->
+                                        <div class="text-center py-3">
+                                            <i class="fas fa-users text-muted mb-2"></i>
+                                            <p class="text-muted mb-0">Барои илова кардани аъзоҳо, аз феҳрист интихоб кунед</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="selectedMembers" class="border-top pt-3">
+                                        <h6 class="fw-bold mb-3">Аъзоҳои интихобшуда</h6>
+                                        <div id="selectedMembersList" class="d-flex flex-wrap gap-2">
+                                            <!-- Selected members will appear here -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-text">
+                                    Аъзоҳои аввалии гурӯҳро интихоб кунед. Шумо метавонед баъдтар аъзоҳои бештар илова кунед.
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden input for selected members -->
+                            <input type="hidden" name="initial_members" id="initialMembersInput">
+                        </div>
+                        
+                        <!-- Associated Quizzes -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 border-bottom pb-2">
+                                <i class="fas fa-question-circle me-2 text-primary"></i>
+                                Викторинаҳои марбут
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Викторинаҳои гурӯҳ</label>
+                                <div class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                                    <div class="mb-3">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" 
+                                                   placeholder="Ҷустуҷӯи викторинаҳо..." id="quizSearch">
+                                            <button class="btn btn-outline-primary" type="button" id="searchQuizBtn">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="quizzesList">
+                                        <div class="list-group">
+                                            {% for quiz in available_quizzes %}
+                                            <div class="list-group-item">
+                                                <div class="form-check">
+                                                    <input class="form-check-input quiz-checkbox" type="checkbox" 
+                                                           value="{{ quiz.id }}" id="quiz{{ quiz.id }}">
+                                                    <label class="form-check-label w-100" for="quiz{{ quiz.id }}">
+                                                        <div class="d-flex justify-content-between">
+                                                            <div>
+                                                                <h6 class="mb-1">{{ quiz.title }}</h6>
+                                                                <small class="text-muted">{{ quiz.subject.name }}</small>
+                                                            </div>
+                                                            <div>
+                                                                <small class="text-muted">{{ quiz.duration }} дақ</small>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            {% empty %}
+                                            <div class="text-center py-3">
+                                                <i class="fas fa-question-circle text-muted mb-2"></i>
+                                                <p class="text-muted mb-0">Викторинаҳо вуҷуд надоранд</p>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-text">
+                                    Викторинаҳое, ки ба ин гурӯҳ дастрасанд. Аъзоҳо танҳо ба викторинаҳои марбут дастрасӣ доранд.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a href="{% url 'group_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i> Бекор кардан
+                            </a>
+                            
+                            <div class="btn-group">
+                                <button type="submit" name="save_draft" class="btn btn-outline-primary">
+                                    <i class="fas fa-save me-2"></i> Захираи нопурра
+                                </button>
+                                <button type="submit" name="publish" class="btn btn-primary">
+                                    <i class="fas fa-check-circle me-2"></i> Эҷод ва нашр
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Tips Card -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-lightbulb me-2 text-warning"></i>
+                        Маслиҳатҳо барои эҷоди гурӯҳи муваффақ
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Номи равшан ва муайян барои гурӯҳ интихоб кунед
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Тавсифи муфассал ба аъзоҳо кӯмак мекунад, ки мақсадҳои гурӯҳро фаҳманд
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Гурӯҳҳои хусусӣ барои фаъолиятҳои махсус ва лоиҳаҳо мувофиқанд
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Ба гурӯҳ аъзоҳои фаъол ва викторинаҳои муносиб илова кунед
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Пешнамоиши гурӯҳ</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="previewContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Омода карда мешавад...</span>
+                        </div>
+                        <p class="mt-3">Пешнамоиш омода карда мешавад...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control-color {
+    width: 60px;
+    height: 45px;
+    padding: 0.375rem;
+}
+
+.image-preview {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: 2px dashed #dee2e6;
+    transition: all 0.3s;
+}
+
+.image-preview:hover {
+    border-color: #4361ee;
+}
+
+.border-bottom {
+    border-bottom: 2px solid #dee2e6 !important;
+}
+
+.form-control-lg {
+    font-size: 1.1rem;
+    padding: 0.75rem 1rem;
+}
+
+.member-tag {
+    background-color: #e9ecef;
+    border-radius: 20px;
+    padding: 0.25rem 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.member-tag .remove-btn {
+    cursor: pointer;
+    color: #dc3545;
+}
+
+.member-tag .remove-btn:hover {
+    color: #b02a37;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedMembers = [];
+let allUsers = [];
+
+$(document).ready(function() {
+    // Load users for member selection
+    loadUsers();
+    
+    // Update color hex value
+    $('#id_color').on('input', function() {
+        $('#colorHex').val($(this).val());
+        updatePreview();
+    });
+    
+    // Image preview
+    window.previewImage = function(event) {
+        const reader = new FileReader();
+        const preview = document.getElementById('imagePreview');
+        
+        reader.onload = function() {
+            preview.style.backgroundImage = `url(${reader.result})`;
+            preview.innerHTML = '';
+        };
+        
+        if (event.target.files[0]) {
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    };
+    
+    // Generate random color
+    window.generateRandomColor = function() {
+        const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+        $('#id_color').val(randomColor);
+        $('#colorHex').val(randomColor);
+        updatePreview();
+    };
+    
+    // Search members
+    $('#memberSearch').on('keyup', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        filterUsers(searchTerm);
+    });
+    
+    $('#searchMemberBtn').click(function() {
+        const searchTerm = $('#memberSearch').val().toLowerCase();
+        filterUsers(searchTerm);
+    });
+    
+    // Add member to selected list
+    $(document).on('click', '.add-member-btn', function() {
+        const userId = $(this).data('user-id');
+        const userName = $(this).data('user-name');
+        const userRole = $(this).data('user-role');
+        
+        if (!selectedMembers.includes(userId)) {
+            selectedMembers.push(userId);
+            addMemberTag(userId, userName, userRole);
+            updateSelectedMembersInput();
+        }
+    });
+    
+    // Remove member from selected list
+    $(document).on('click', '.remove-member-btn', function() {
+        const userId = $(this).data('user-id');
+        const index = selectedMembers.indexOf(userId);
+        
+        if (index > -1) {
+            selectedMembers.splice(index, 1);
+            $(`#memberTag-${userId}`).remove();
+            updateSelectedMembersInput();
+        }
+    });
+    
+    // Form validation
+    $('#groupForm').submit(function(e) {
+        const name = $('#id_name').val().trim();
+        const description = $('#id_description').val().trim();
+        
+        if (!name) {
+            e.preventDefault();
+            showAlert('Лутфан номи гурӯҳро ворид кунед', 'danger');
+            $('#id_name').focus();
+            return false;
+        }
+        
+        if (name.length < 3) {
+            e.preventDefault();
+            showAlert('Номи гурӯҳ бояд ҳадди ақал 3 ҳарф дошта бошад', 'danger');
+            $('#id_name').focus();
+            return false;
+        }
+        
+        if (!description) {
+            if (!confirm('Шумо тавсифи гурӯҳро ворид накардед. Оё мутмаин ҳастед, ки мехоҳед идома диҳед?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        
+        // Validate max members
+        const maxMembers = parseInt($('#id_max_members').val());
+        if (maxMembers < 0) {
+            e.preventDefault();
+            showAlert('Ҳадди аксар аъзоҳо наметавонад манфӣ бошад', 'danger');
+            $('#id_max_members').focus();
+            return false;
+        }
+        
+        return true;
+    });
+    
+    // Add preview button
+    const previewBtn = $('<button type="button" class="btn btn-outline-info me-2" id="previewBtn">' +
+                        '<i class="fas fa-eye me-2"></i>Пешнамоиш</button>')
+                        .insertBefore('button[name="save_draft"]');
+    
+    $('#previewBtn').click(showPreview);
+});
+
+// Load users for member selection
+function loadUsers() {
+    // In real app, this would be an AJAX call to get users
+    // For demo purposes, we'll use dummy data
+    allUsers = [
+        { id: 1, username: 'ali', full_name: 'Али Ҳасанзода', role: 'Донишҷӯ' },
+        { id: 2, username: 'sara', full_name: 'Сара Ҷамолова', role: 'Донишҷӯ' },
+        { id: 3, username: 'farid', full_name: 'Фаридун Усмонов', role: 'Донишҷӯ' },
+        { id: 4, username: 'zebo', full_name: 'Зебо Раҳимова', role: 'Донишҷӯ' },
+        { id: 5, username: 'teacher1', full_name: 'Низом Низомов', role: 'Омӯзгор' },
+        { id: 6, username: 'teacher2', full_name: 'Малика Маликова', role: 'Омӯзгор' }
+    ];
+    
+    filterUsers('');
+}
+
+// Filter users based on search term
+function filterUsers(searchTerm) {
+    const filteredUsers = allUsers.filter(user => 
+        user.username.toLowerCase().includes(searchTerm) ||
+        user.full_name.toLowerCase().includes(searchTerm)
+    );
+    
+    displayUsers(filteredUsers);
+}
+
+// Display users in the members list
+function displayUsers(users) {
+    const membersList = $('#membersList');
+    
+    if (users.length === 0) {
+        membersList.html(`
+            <div class="text-center py-3">
+                <i class="fas fa-user-slash text-muted mb-2"></i>
+                <p class="text-muted mb-0">Корбар ёфт нашуд</p>
+            </div>
+        `);
+        return;
+    }
+    
+    let html = '<div class="list-group">';
+    
+    users.forEach(user => {
+        const isSelected = selectedMembers.includes(user.id.toString());
+        
+        html += `
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0">${user.full_name}</h6>
+                    <small class="text-muted">@${user.username} • ${user.role}</small>
+                </div>
+                <div>
+                    ${isSelected ? 
+                        '<span class="badge bg-success">Интихоб шудааст</span>' : 
+                        `<button class="btn btn-sm btn-outline-primary add-member-btn" 
+                                data-user-id="${user.id}" 
+                                data-user-name="${user.full_name}"
+                                data-user-role="${user.role}">
+                            <i class="fas fa-plus"></i> Илова
+                        </button>`
+                    }
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    membersList.html(html);
+}
+
+// Add member tag to selected members list
+function addMemberTag(userId, userName, userRole) {
+    const tag = `
+        <div class="member-tag" id="memberTag-${userId}">
+            <span>${userName}</span>
+            <small class="text-muted">(${userRole})</small>
+            <span class="remove-btn remove-member-btn" data-user-id="${userId}">
+                <i class="fas fa-times"></i>
+            </span>
+        </div>
+    `;
+    
+    $('#selectedMembersList').append(tag);
+}
+
+// Update hidden input with selected members
+function updateSelectedMembersInput() {
+    $('#initialMembersInput').val(selectedMembers.join(','));
+    
+    // Show/hide selected members section
+    if (selectedMembers.length > 0) {
+        $('#selectedMembers').show();
+    } else {
+        $('#selectedMembers').hide();
+    }
+}
+
+// Show preview
+function showPreview() {
+    $('#previewModal').modal('show');
+    
+    const formData = {
+        name: $('#id_name').val() || 'Гурӯҳи нав',
+        description: $('#id_description').val() || 'Тавсифи гурӯҳ вуҷуд надорад',
+        type: $('input[name="group_type"]:checked').val(),
+        category: $('#id_category option:selected').text(),
+        color: $('#id_color').val(),
+        members: selectedMembers.length,
+        quizzes: $('.quiz-checkbox:checked').length
+    };
+    
+    // Generate preview
+    setTimeout(function() {
+        const typeLabel = formData.type === 'public' ? 'Оммавӣ' : 'Хусусӣ';
+        const typeClass = formData.type === 'public' ? 'success' : 'warning';
+        
+        $('#previewContent').html(`
+            <div class="card border-0 shadow-sm">
+                <div class="card-header" style="background-color: ${formData.color}; color: white;">
+                    <h4 class="mb-0">${formData.name}</h4>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">${formData.description}</p>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-users text-primary me-2"></i>
+                                <div>
+                                    <small class="text-muted">Навъи гурӯҳ</small>
+                                    <div>
+                                        <span class="badge bg-${typeClass}">${typeLabel}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-tag text-primary me-2"></i>
+                                <div>
+                                    <small class="text-muted">Категория</small>
+                                    <div class="fw-bold">${formData.category || 'Муайян нашуда'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="text-center p-3 border rounded">
+                                <div class="display-6 fw-bold text-primary">${formData.members}</div>
+                                <small class="text-muted">Аъзоҳои аввалӣ</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="text-center p-3 border rounded">
+                                <div class="display-6 fw-bold text-success">${formData.quizzes}</div>
+                                <small class="text-muted">Викторинаҳо</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Ин танҳо пешнамоиш аст. Барои эҷоди гурӯҳ, тугмаи "Эҷод ва нашр"-ро пахш кунед.
+                    </div>
+                </div>
+            </div>
+        `);
+    }, 500);
+}
+
+// Alert function
+function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Remove any existing alerts
+    $('.alert').remove();
+    
+    // Add new alert at the top of form
+    $('#groupForm').prepend(alertHtml);
+    
+    // Auto remove after 5 seconds
+    setTimeout(function() {
+        $('.alert').alert('close');
+    }, 5000);
+}
+
+// Update preview (for color changes)
+function updatePreview() {
+    // If preview is open, update it
+    if ($('#previewModal').hasClass('show')) {
+        showPreview();
+    }
+}
+</script>
+{% endblock %}

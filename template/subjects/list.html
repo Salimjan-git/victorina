@@ -1,0 +1,540 @@
+<!-- templates/subjects/list.html -->
+{% extends "base.html" %}
+
+{% block title %}Фанҳо{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-5 fw-bold">
+            <i class="fas fa-book-open me-2 text-primary"></i>
+            Фанҳо
+        </h1>
+        
+        {% if user.role == 'teacher' or user.role == 'admin' %}
+        <a href="{% url 'subject_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i> Фани нав
+        </a>
+        {% endif %}
+    </div>
+    
+    <!-- Search and Filter -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" id="filterForm">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control" name="search"
+                                   placeholder="Ҷустуҷӯи фанҳо..." 
+                                   value="{{ search_query|default:'' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" name="level_type">
+                            <option value="">Ҳама сатҳҳо</option>
+                            <option value="school" {% if selected_level_type == 'school' %}selected{% endif %}>
+                                Мактаб
+                            </option>
+                            <option value="university" {% if selected_level_type == 'university' %}selected{% endif %}>
+                                Донишгоҳ
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-filter me-2"></i> Филтр
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Subjects Grid -->
+    {% if subjects %}
+    <div class="row" id="subjectsContainer">
+        {% for subject in subjects %}
+        <div class="col-md-6 col-lg-4 mb-4 subject-card" data-level="{{ subject.level_type }}">
+            <div class="card h-100 shadow-sm hover-card">
+                <div class="card-header" style="background-color: {{ subject.color|default:'#4361ee' }}; color: white;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="{{ subject.icon|default:'fas fa-book' }} me-2"></i>
+                            {{ subject.name }}
+                        </h5>
+                        <span class="badge bg-light text-dark">{{ subject.level_type_display }}</span>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <p class="card-text text-muted mb-3">
+                        {{ subject.description|truncatewords:25|default:"Тавсифи фан вуҷуд надорад." }}
+                    </p>
+                    
+                    <!-- Subject Details -->
+                    <div class="mb-3">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-graduation-cap text-primary me-2"></i>
+                                    <small>{{ subject.grade_level|default:"Ҳама синфҳо" }}</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-percentage text-success me-2"></i>
+                                    <small>{{ subject.pass_percentage }}% гузаронд</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Subject Stats -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <div class="stat-card text-center p-2 border rounded">
+                                <div class="display-6 fw-bold text-primary">{{ subject.quiz_count|default:"0" }}</div>
+                                <small class="text-muted">Викторина</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card text-center p-2 border rounded">
+                                <div class="display-6 fw-bold text-success">{{ subject.question_count|default:"0" }}</div>
+                                <small class="text-muted">Савол</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress -->
+                    {% if subject.completion_rate is not None and user.role == 'student' %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small>Миқдори иҷро</small>
+                            <small>{{ subject.completion_rate }}%</small>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: {{ subject.completion_rate }}%; 
+                                        background-color: {{ subject.color|default:'#4361ee' }}">
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Subject Info -->
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="user-avatar-xs me-2" style="background-color: {{ subject.color|default:'#4361ee' }};">
+                            <i class="fas fa-book fa-xs"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">Сатҳи таълимӣ:</small>
+                            <small class="fw-bold">{{ subject.level_type_display }}</small><br>
+                            <small class="text-muted">Рамз: {{ subject.code|default:"Номаълум" }}</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Subject Status -->
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        {% if subject.is_public %}
+                        <span class="badge bg-success">
+                            <i class="fas fa-globe me-1"></i> Оммавӣ
+                        </span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">
+                            <i class="fas fa-lock me-1"></i> Хусусӣ
+                        </span>
+                        {% endif %}
+                        
+                        {% if subject.max_students > 0 %}
+                        <span class="badge bg-info">
+                            <i class="fas fa-users me-1"></i> Макс. {{ subject.max_students }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="btn-group">
+                            <a href="{% url 'quiz_list' %}?subject={{ subject.id }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i> Дидан
+                            </a>
+                            {% if user.role == 'student' %}
+                            <button class="btn btn-sm btn-outline-success enroll-btn" data-subject-id="{{ subject.id }}">
+                                <i class="fas fa-user-plus me-1"></i> Номнависӣ
+                            </button>
+                            {% endif %}
+                        </div>
+                        
+                        {% if user.role == 'teacher' or user.role == 'admin' %}
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                    type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-edit me-2"></i> Таҳрир
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="#">
+                                        <i class="fas fa-trash me-2"></i> Ҳазф
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-chart-bar me-2"></i> Омор
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">Фанҳо вуҷуд надоранд</h4>
+                <p class="text-muted">Ҳанӯз ягон фан эҷод нашудааст</p>
+                {% if user.role == 'teacher' or user.role == 'admin' %}
+                <a href="{% url 'subject_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i> Фани нав эҷод кунед
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Statistics Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Омори умумии фанҳо
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="display-4 fw-bold text-primary">{{ stats.total_subjects|default:"0" }}</div>
+                                <small class="text-muted">Фанҳои фаъол</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="display-4 fw-bold text-success">{{ stats.total_quizzes|default:"0" }}</div>
+                                <small class="text-muted">Викторинаҳо</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="display-4 fw-bold text-info">{{ stats.total_questions|default:"0" }}</div>
+                                <small class="text-muted">Саволҳо</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="display-4 fw-bold text-warning">{{ stats.active_students|default:"0" }}</div>
+                                <small class="text-muted">Донишҷӯёни фаъол</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Popular Subjects -->
+                    <h6 class="mt-4 mb-3">Фанҳои маъмул</h6>
+                    <div class="row">
+                        {% for popular_subject in popular_subjects %}
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <div class="rounded-circle mx-auto mb-2" 
+                                         style="width: 50px; height: 50px; background-color: {{ popular_subject.color|default:'#4361ee' }}20; 
+                                                display: flex; align-items: center; justify-content: center;">
+                                        <i class="{{ popular_subject.icon|default:'fas fa-book' }} text-primary"></i>
+                                    </div>
+                                    <h6 class="mb-1">{{ popular_subject.name }}</h6>
+                                    <small class="text-muted">{{ popular_subject.level_type_display }}</small><br>
+                                    <small class="text-primary">{{ popular_subject.quiz_count }} викторина</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12 text-center">
+                            <p class="text-muted">Ҳанӯз фанҳои маъмул вуҷуд надоранд</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- How to Enroll -->
+    {% if user.role == 'student' %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-question-circle me-2 text-primary"></i>
+                        Чӣ гуна ба фан номнависӣ кунам?
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="text-center p-3">
+                                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-3" 
+                                     style="width: 60px; height: 60px;">
+                                    <i class="fas fa-search fa-lg"></i>
+                                </div>
+                                <h6>1. Фани дилхоҳро ёбед</h6>
+                                <p class="text-muted small">Фанҳои дастрасро тамошо кунед ва фанеро интихоб кунед</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="text-center p-3">
+                                <div class="rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center mb-3" 
+                                     style="width: 60px; height: 60px;">
+                                    <i class="fas fa-user-plus fa-lg"></i>
+                                </div>
+                                <h6>2. Ба фан номнависӣ кунед</h6>
+                                <p class="text-muted small">Тугмаи "Номнависӣ"-ро пахш кунед то ба фан дохил шавед</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="text-center p-3">
+                                <div class="rounded-circle bg-info bg-opacity-10 text-info d-inline-flex align-items-center justify-content-center mb-3" 
+                                     style="width: 60px; height: 60px;">
+                                    <i class="fas fa-play-circle fa-lg"></i>
+                                </div>
+                                <h6>3. Викторина оғоз кунед</h6>
+                                <p class="text-muted small">Пас аз номнависӣ, ба викторинаҳои фан дастрасӣ пайдо кунед</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Enroll Modal -->
+<div class="modal fade" id="enrollModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Номнависӣ ба фан
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Оё шумо мутмаин ҳастед, ки мехоҳед ба фан <strong id="subjectName"></strong> номнависӣ кунед?</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Пас аз номнависӣ:
+                    <ul class="mb-0 mt-2">
+                        <li>Ба ҳамаи викторинаҳои фан дастрасӣ пайдо мекунед</li>
+                        <li>Натиҷаҳои шумо дар омори фан сабт мешаванд</li>
+                        <li>Ҳар вақт метавонед аз фан хориҷ шавед</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Бекор кардан</button>
+                <button type="button" class="btn btn-success" id="confirmEnroll">
+                    <i class="fas fa-check me-2"></i> Бале, номнависӣ кунам
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-card {
+    transition: all 0.3s ease;
+    border: 1px solid #dee2e6;
+}
+
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    border-color: #4361ee;
+}
+
+.user-avatar-xs {
+    width: 28px;
+    height: 28px;
+    background-color: #4361ee;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.stat-card {
+    transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.05);
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    let currentSubjectId = null;
+    
+    // Search functionality
+    $('#searchInput').on('keyup', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        
+        $('.subject-card').each(function() {
+            const subjectName = $(this).find('.card-header h5').text().toLowerCase();
+            const subjectDesc = $(this).find('.card-text').text().toLowerCase();
+            
+            if (subjectName.includes(searchTerm) || subjectDesc.includes(searchTerm)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+    
+    // Filter by level type
+    $('select[name="level_type"]').change(function() {
+        const selectedLevel = $(this).val();
+        
+        if (selectedLevel === '') {
+            $('.subject-card').show();
+        } else {
+            $('.subject-card').each(function() {
+                const level = $(this).data('level');
+                if (level === selectedLevel) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        }
+    });
+    
+    // Enroll button click
+    $('.enroll-btn').click(function() {
+        currentSubjectId = $(this).data('subject-id');
+        const subjectName = $(this).closest('.subject-card').find('.card-header h5').text().trim();
+        
+        $('#subjectName').text(subjectName);
+        $('#enrollModal').modal('show');
+    });
+    
+    $('#confirmEnroll').click(function() {
+        if (!currentSubjectId) return;
+        
+        $.ajax({
+            url: '/subjects/' + currentSubjectId + '/enroll/',
+            type: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#enrollModal').modal('hide');
+                
+                const subjectCard = $(`.enroll-btn[data-subject-id="${currentSubjectId}"]`).closest('.subject-card');
+                subjectCard.find('.enroll-btn')
+                    .removeClass('btn-outline-success enroll-btn')
+                    .addClass('btn-success')
+                    .html('<i class="fas fa-check me-1"></i> Номнависӣ карда шудааст')
+                    .prop('disabled', true);
+                
+                showAlert('Бомуваффақият ба фан номнависӣ кардед!', 'success');
+            },
+            error: function(xhr) {
+                $('#enrollModal').modal('hide');
+                showAlert('Хатоги дар номнависӣ. Лутфан бори дигар кӯшиш кунед.', 'danger');
+            }
+        });
+    });
+    
+    // Функсияи паём
+    function showAlert(message, type) {
+        const alertHtml = `
+            <div class="alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3" role="alert" style="z-index: 9999;">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        $('body').append(alertHtml);
+        
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Илова кардани логикаи дахлдории сатҳ барои донишҷӯ
+    {% if user.role == 'student' %}
+    $('.subject-card').each(function() {
+        const levelType = $(this).data('level');
+        const userProfile = {
+            'level_type': '{{ user.profile.level_type|default:"school" }}'
+        };
+        
+        // Агар фан барои сатҳи донишҷӯ мувофиқ набошад, тугмаи номнависӣ ногаҳон карда мешавад
+        if (userProfile.level_type && userProfile.level_type !== levelType) {
+            $(this).find('.enroll-btn')
+                .prop('disabled', true)
+                .html('<i class="fas fa-lock me-1"></i> Барои сатҳи дигар')
+                .removeClass('btn-outline-success')
+                .addClass('btn-outline-secondary');
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}
