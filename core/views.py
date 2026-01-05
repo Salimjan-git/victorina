@@ -12,6 +12,7 @@ from django.db.models import Q, Avg, Max, Min, Count
 import json
 from django import forms
 from django import template
+import Paginator
 
 register = template.Library()
 
@@ -129,38 +130,32 @@ def dashboard_view(request):
         elif request.user.role == 'student':
             now = timezone.now()
             
-            # Создаем профиль если нет
             try:
                 profile = request.user.profile
             except Profile.DoesNotExist:
                 profile = Profile.objects.create(user=request.user, level_type='school', current_level=1)
             
-            # Активные викторины
             active_quizzes = Quiz.objects.filter(
                 status='active',
                 start_time__lte=now,
                 end_time__gte=now
             )
             
-            # Доступные викторины для уровня студента
             available_quizzes = active_quizzes.filter(
                 level_type=profile.level_type,
                 start_level__lte=profile.current_level,
                 end_level__gte=profile.current_level
             )
             
-            # Завершенные сессии
             completed_sessions = QuizSession.objects.filter(
                 user=request.user,
                 finished_at__isnull=False
             )
             
-            # Группы студента
             my_groups = Group.objects.filter(
                 Q(leader=request.user) | Q(members__user=request.user)
             ).distinct()
             
-            # Последние результаты
             my_results = Result.objects.filter(user=request.user).order_by('-completed_at')[:5]
             
             context.update({
