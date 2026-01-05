@@ -1168,38 +1168,48 @@ def my_results_view(request):
         return redirect('dashboard')
 
 
-@user_passes_test(is_teacher)
+@user_passes_test(lambda u: u.role in ['teacher', 'admin'])
 def quiz_results_view(request, quiz_pk):
     """View for displaying quiz results"""
     try:
         quiz = get_object_or_404(Quiz, pk=quiz_pk)
         
+        # Check if user has permission to view results
         if request.user != quiz.created_by and request.user.role != 'admin':
             messages.error(request, 'Шумо иҷозати дидани натиҷаҳои ин викторинаро надоред.')
             return redirect('quiz_list')
         
         # Get all results for this quiz
-        results = Result.objects.filter(quiz=quiz).order_by('-score')
+        results = Result.objects.filter(quiz=quiz).select_related('user').order_by('-score')
         
         # Calculate statistics
         total_participants = results.count()
         
         if total_participants > 0:
-            avg_score = results.aggregate(avg=Avg('score'))['avg'] or 0
-            max_score = results.aggregate(max=Max('score'))['max'] or 0
-            min_score = results.aggregate(min=Min('score'))['min'] or 0
+            # Calculate average score
+            total_questions = quiz.questions.count()
+            
+            # Method 1: Calculate using aggregated data
+            try:
+                avg_score = results.aggregate(avg=Avg('score'))['avg'] or 0
+                max_score = results.aggregate(max=Max('score'))['max'] or 0
+                min_score = results.aggregate(min=Min('score'))['min'] or 0
+            except:
+                avg_score = max_score = min_score = 0
             
             # Calculate average score percentage
-            total_questions = quiz.questions.count()
             avg_percentage = (avg_score / total_questions * 100) if total_questions > 0 else 0
             
             # Calculate passed/failed counts
             passed_count = 0
+            failed_count = 0
+            
             for result in results:
                 result_percentage = (result.score / total_questions * 100) if total_questions > 0 else 0
                 if result_percentage >= quiz.pass_percentage:
                     passed_count += 1
-            failed_count = total_participants - passed_count
+                else:
+                    failed_count += 1
             
             # Get top results (limit to 5)
             top_results = results[:5]
@@ -1222,21 +1232,39 @@ def quiz_results_view(request, quiz_pk):
             # Add percentage to each result for template
             for result in results:
                 result.score_percentage = (result.score / total_questions * 100) if total_questions > 0 else 0
+                result.is_passed = result.score_percentage >= quiz.pass_percentage
         else:
-            avg_score = 0
-            max_score = 0
-            min_score = 0
+            # Default values if no results
+            avg_score = max_score = min_score = 0
             avg_percentage = 0
-            passed_count = 0
-            failed_count = 0
+            passed_count = failed_count = 0
             top_results = []
             recent_results = []
             avg_time = 0
             avg_attempts = 1
         
+        # Apply search filter if provided
+        search_query = request.GET.get('search', '')
+        if search_query:
+            results = results.filter(
+                Q(user__username__icontains=search_query) |
+                Q(user__first_name__icontains=search_query) |
+                Q(user__last_name__icontains=search_query) |
+                Q(user__email__icontains=search_query)
+            )
+        
+        # Apply status filter if provided
+        status_filter = request.GET.get('status', '')
+        if status_filter:
+            if status_filter == 'passed':
+                results = results.filter(score__gte=(quiz.pass_percentage * total_questions / 100))
+            elif status_filter == 'failed':
+                results = results.filter(score__lt=(quiz.pass_percentage * total_questions / 100))
+        
         # Pagination
         page = request.GET.get('page', 1)
-        paginator = Paginator(results, 20)  # 20 results per page
+        paginator = Paginator(results, 10)  # 10 results per page
+        
         try:
             results_page = paginator.page(page)
         except PageNotAnInteger:
@@ -1257,14 +1285,21 @@ def quiz_results_view(request, quiz_pk):
             'recent_results': recent_results,
             'avg_time': avg_time,
             'avg_attempts': avg_attempts,
+            'search_query': search_query,
+            'status_filter': status_filter,
+            'title': f'Натиҷаҳои {quiz.title}',
         }
         
         return render(request, 'results/quiz_results.html', context)
         
     except Exception as e:
+        import traceback
+        print(f"Error in quiz_results_view: {str(e)}")
+        print(traceback.format_exc())
         messages.error(request, f'Хатогӣ дар намоиши натиҷаҳои викторина: {str(e)}')
         return redirect('quiz_list')
-
+    
+    
 @login_required
 def check_quiz_time_view(request, pk):
     try:
